@@ -31,9 +31,7 @@ pub fn configure_log(method: LogMethod, options: LogOptions) -> Result<(), Strin
                         LOG_FILE = Some(f);
                         Ok(())
                     },
-                    Err(e) => {
-                        Err(format!("{e}"))
-                    }
+                    Err(e) => Err(format!("{e}")),
                 }
             }
         }
@@ -44,66 +42,113 @@ pub fn configure_log(method: LogMethod, options: LogOptions) -> Result<(), Strin
 mod tests {
     use std::fs::remove_file;
 
-    use crate::{configure_log, LogMethod, LogOptions};
+    use crate::{
+        configure_log,
+        data::{get_log_file, get_log_options},
+        LogMethod, LogOptions,
+    };
 
     #[test]
-    fn log_already_configured() {
+    fn log_already_configured() -> Result<(), String> {
         // Set config to Some
         unsafe { crate::data::LOG_OPTIONS = Some(LogOptions { add_date: true }) }
 
         let method = LogMethod::ToTerminal;
         let options = LogOptions { add_date: false };
-        let result = configure_log(method, options);
-        assert!(result.is_err());
+
+        // Function shall return Err
+        match configure_log(method, options) {
+            Ok(_) => Err("configure_log should return Err variant".to_string()),
+            Err(_) => Ok(()),
+        }
     }
 
     #[test]
-    fn log_not_configured_terminal() {
+    fn log_not_configured_terminal() -> Result<(), String> {
         // Set config to None
         unsafe { crate::data::LOG_OPTIONS = None }
         unsafe { crate::data::LOG_FILE = None }
 
         let method = LogMethod::ToTerminal;
         let options = LogOptions { add_date: false };
-        let result = configure_log(method, options);
-        assert!(result.is_ok());
-        assert!(unsafe { crate::data::LOG_FILE.is_none() });
-        assert!(unsafe { crate::data::LOG_OPTIONS.is_some() });
+
+        // Function shall return Ok
+        // log file shall be None
+        // Log options shall be Some
+        configure_log(method, options)?;
+
+        match get_log_file() {
+            Some(_) => return Err("LOG_FILE should be None".to_string()),
+            None => (),
+        };
+
+        match get_log_options() {
+            Some(_) => Ok(()),
+            None => Err("LOG_OPTIONS should be Some".to_string()),
+        }
     }
 
     #[test]
-    fn log_not_configured_file() {
+    fn log_not_configured_file() -> Result<(), String> {
         // Set config to None
-        unsafe { crate::data::LOG_OPTIONS = None; }
-        unsafe { crate::data::LOG_FILE = None; }
+        unsafe {
+            crate::data::LOG_OPTIONS = None;
+        }
+        unsafe {
+            crate::data::LOG_FILE = None;
+        }
 
         remove_file("log.txt").unwrap_or(());
 
         let method = LogMethod::ToFile("log.txt".to_string(), false);
         let options = LogOptions { add_date: false };
-        let result = configure_log(method, options);
-        println!("{:?}", result);
-        assert!(result.is_ok());
-        assert!(unsafe { crate::data::LOG_FILE.is_some() });
+
+        // Function shall return Ok
+        // log file shall be Some
+        // Log options shall be Some
+        configure_log(method, options)?;
 
         remove_file("log.txt").unwrap_or(());
+
+        match get_log_file() {
+            Some(_) => (),
+            None => return Err("LOG_FILE should be Some".to_string()),
+        };
+        match get_log_options() {
+            Some(_) => Ok(()),
+            None => Err("LOG_OPTIONS should be Some".to_string()),
+        }
     }
 
     #[test]
-    fn log_not_configured_both() {
+    fn log_not_configured_both() -> Result<(), String> {
         // Set config to None
-        unsafe { crate::data::LOG_OPTIONS = None; }
-        unsafe { crate::data::LOG_FILE = None; }
+        unsafe {
+            crate::data::LOG_OPTIONS = None;
+        }
+        unsafe {
+            crate::data::LOG_FILE = None;
+        }
 
         remove_file("log.txt").unwrap_or(());
 
         let method = LogMethod::Both("log.txt".to_string(), true);
         let options = LogOptions { add_date: false };
-        let result = configure_log(method, options);
-        println!("{:?}", result);
-        assert!(result.is_ok());
-        assert!(unsafe { crate::data::LOG_FILE.is_some() });
+
+        // Function shall return Ok
+        // log file shall be Some
+        // Log options shall be Some
+        configure_log(method, options)?;
 
         remove_file("log.txt").unwrap_or(());
+
+        match get_log_file() {
+            Some(_) => (),
+            None => return Err("LOG_FILE should be Some".to_string()),
+        };
+        match get_log_options() {
+            Some(_) => Ok(()),
+            None => Err("LOG_OPTIONS should be Some".to_string()),
+        }
     }
 }
