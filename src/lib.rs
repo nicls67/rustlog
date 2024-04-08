@@ -32,7 +32,6 @@ pub fn configure_log(method: LogMethod, options: LogOptions) -> Result<(), Strin
                         Ok(())
                     },
                     Err(e) => {
-                        println!("{e}");
                         Err(format!("{e}"))
                     }
                 }
@@ -43,6 +42,8 @@ pub fn configure_log(method: LogMethod, options: LogOptions) -> Result<(), Strin
 
 #[cfg(test)]
 mod tests {
+    use std::fs::remove_file;
+
     use crate::{configure_log, LogMethod, LogOptions};
 
     #[test]
@@ -73,26 +74,36 @@ mod tests {
     #[test]
     fn log_not_configured_file() {
         // Set config to None
-        unsafe { crate::data::LOG_OPTIONS = None }
-        unsafe { crate::data::LOG_FILE = None }
+        unsafe { crate::data::LOG_OPTIONS = None; }
+        unsafe { crate::data::LOG_FILE = None; }
+
+        remove_file("log.txt").unwrap_or(());
 
         let method = LogMethod::ToFile("log.txt".to_string(), false);
         let options = LogOptions { add_date: false };
         let result = configure_log(method, options);
+        println!("{:?}", result);
         assert!(result.is_ok());
         assert!(unsafe { crate::data::LOG_FILE.is_some() });
+
+        remove_file("log.txt").unwrap_or(());
     }
 
     #[test]
     fn log_not_configured_both() {
         // Set config to None
-        unsafe { crate::data::LOG_OPTIONS = None }
-        unsafe { crate::data::LOG_FILE = None }
+        unsafe { crate::data::LOG_OPTIONS = None; }
+        unsafe { crate::data::LOG_FILE = None; }
+
+        remove_file("log.txt").unwrap_or(());
 
         let method = LogMethod::Both("log.txt".to_string(), true);
         let options = LogOptions { add_date: false };
         let result = configure_log(method, options);
+        println!("{:?}", result);
         assert!(result.is_ok());
         assert!(unsafe { crate::data::LOG_FILE.is_some() });
+
+        remove_file("log.txt").unwrap_or(());
     }
 }
