@@ -11,20 +11,22 @@ It can be configured only once, meaning the first call of `configure_log` will d
 
 ### Configure logging
 
-1. Define log method
-2. Define log options
-3. Call `configure_log`
+Implementation of `RustLogConfig` must be used to generate log configuration.
+
+`RustLogConfig::new_config` will generate a default configuration will all outputs disabled. Then use `RustLogConfig` methods to configure logging and enable outputs.
+
+`RustLogConfig::configure` will configure and start logging with the desired configuration. `RustLogConfig::configure` will return an `Err` variant if called twice, with no impact on the current logging configuration.
 
 ```rust
-use rustlog::{LogOptions, LogMethod, configure_log};
+use rustlog::RustLogConfig;
 
+// To enable logging on terminal
+RustLogConfig::new_config().enable_terminal().configure().unwrap();
+```
 
-let method1 = LogMethod::ToTerminal;
-let method2 = LogMethod::ToFile("log.txt".to_string(), true);
+```rust
+use rustlog::RustLogConfig;
 
-let options = LogOptions {
-    add_date: true
-};
-
-configure_log(method1, options).unwrap();
+// To enable logging on file
+RustLogConfig::new_config().enable_file("log.txt", true).configure().unwrap();
 ```
