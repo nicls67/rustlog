@@ -60,6 +60,7 @@ mod tests {
             append_to_file: false,
             display_date: false,
             display_caller: false,
+            locked: false,
         };
 
         match generate_log(text, caller, date, &config).as_str() {
@@ -79,6 +80,7 @@ mod tests {
             append_to_file: false,
             display_date: false,
             display_caller: true,
+            locked: false,
         };
 
         match generate_log(text, caller, date, &config).as_str() {
@@ -98,6 +100,7 @@ mod tests {
             append_to_file: false,
             display_date: true,
             display_caller: true,
+            locked: false,
         };
 
         match generate_log(text, caller, date, &config).as_str() {
@@ -117,6 +120,7 @@ mod tests {
             append_to_file: false,
             display_date: true,
             display_caller: false,
+            locked: false,
         };
 
         match generate_log(text, caller, date, &config).as_str() {

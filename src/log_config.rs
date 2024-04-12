@@ -19,6 +19,7 @@ pub struct RustLogConfig {
     pub(crate) append_to_file: bool,
     pub(crate) display_date: bool,
     pub(crate) display_caller: bool,
+    pub(crate) locked: bool
 }
 
 impl RustLogConfig {
@@ -32,6 +33,7 @@ impl RustLogConfig {
             append_to_file: false,
             display_date: false,
             display_caller: false,
+            locked: false,
         }
     }
 
@@ -39,10 +41,22 @@ impl RustLogConfig {
     ///
     /// Configuration must be rebuilt to write new logs. Clear can be done only if configuration is not locked.
     pub fn clear_config() {
-        unsafe {
-            LOG_CONFIG = None;
-            LOG_FILE = None;
+        if let Some(config) = get_log_config() {
+            if !config.locked {
+                unsafe {
+                    LOG_CONFIG = None;
+                    LOG_FILE = None;
+                }
+            }
         }
+    }
+
+    /// Locks configuration
+    ///
+    /// After call of `lock`, configuration cannot be cleared
+    pub fn lock(&mut self) -> &mut RustLogConfig {
+        self.locked = true;
+        self
     }
 
     /// Enables logging to terminal
@@ -169,6 +183,7 @@ mod tests {
                 append_to_file: false,
                 display_date: false,
                 display_caller: false,
+                locked: false,
             });
         }
 
@@ -282,7 +297,7 @@ mod tests {
         // Log options shall be None
         let result = RustLogConfig::new_config().configure();
         remove_file("log.txt").unwrap_or(());
-        
+
         match result {
             Ok(_) => Err("configure_log should return Err variant".to_string()),
             Err(_) => Ok(()),
@@ -311,6 +326,50 @@ mod tests {
                 false => Err("append_to_file should be TRUE".to_string()),
             },
             None => Err("log_to_file should be Some".to_string()),
+        }
+    }
+
+    #[test]
+    fn clear_config_unlocked() -> Result<(), String> {
+        // Set config to None
+        unsafe {
+            crate::data::LOG_CONFIG = None;
+        }
+        unsafe {
+            crate::data::LOG_FILE = None;
+        }
+
+        // New config unlocked by default
+        RustLogConfig::new_config().enable_terminal().configure().unwrap();
+
+        // Try to clear config
+        RustLogConfig::clear_config();
+
+        match get_log_config() {
+            Some(_) => Err("Configuration should be cleared".to_string()),
+            None => Ok(()),
+        }
+    }
+
+    #[test]
+    fn clear_config_locked() -> Result<(), String> {
+        // Set config to None
+        unsafe {
+            crate::data::LOG_CONFIG = None;
+        }
+        unsafe {
+            crate::data::LOG_FILE = None;
+        }
+        
+        // New locked config
+        RustLogConfig::new_config().enable_terminal().lock().configure().unwrap();
+
+        // Try to clear config
+        RustLogConfig::clear_config();
+
+        match get_log_config() {
+            Some(_) => Ok(()),
+            None => Err("Configuration should be locked".to_string()),
         }
     }
 }
