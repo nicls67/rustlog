@@ -7,6 +7,9 @@ A logging library for Rust projects
 **RustLog** logs data from main application or from another library either on terminal or in a specific file.
 It can be configured only once, meaning the first call of `configure_log` will define once for all how the logging will work.
 
+To log some text, use `write`.
+Calls of `write` method will never panick or return an error to avoid any perturbation in main program.
+
 ## Usage
 
 ### Configure logging
@@ -29,4 +32,14 @@ use rustlog::RustLogConfig;
 
 // To enable logging on file
 RustLogConfig::new_config().enable_file("log.txt", true).configure().unwrap();
+```
+
+### Log text
+
+Call `write_log` to generate a log entry. Format of log entry is _DATE-CALLER-TEXT_, _DATE_ and _CALLER_ might be added or not depending of the selected configuration.
+
+```rust
+use rustlog::write_log;
+
+write_log("New log text".to_string(), "From function".to_string());
 ```

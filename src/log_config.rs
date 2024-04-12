@@ -2,17 +2,23 @@
 //! RustLog configuration module
 //!
 
-use std::fs::File;
+use std::{
+    fs::{self, File},
+    io::Write,
+};
 
-use crate::data::{get_log_config, LOG_CONFIG, LOG_FILE};
+use chrono::Local;
+
+use crate::data::{get_log_config, get_log_file, LOG_CONFIG, LOG_FILE};
 
 /// Log configuration structure
 #[derive(Clone, Copy)]
 pub struct RustLogConfig {
-    log_to_terminal: bool,
-    log_to_file: Option<&'static str>,
-    append_to_file: bool,
-    add_date: bool,
+    pub(crate) log_to_terminal: bool,
+    pub(crate) log_to_file: Option<&'static str>,
+    pub(crate) append_to_file: bool,
+    pub(crate) display_date: bool,
+    pub(crate) display_caller: bool,
 }
 
 impl RustLogConfig {
@@ -24,7 +30,18 @@ impl RustLogConfig {
             log_to_terminal: false,
             log_to_file: None,
             append_to_file: false,
-            add_date: false,
+            display_date: false,
+            display_caller: false,
+        }
+    }
+
+    /// Deletes log configuration.
+    ///
+    /// Configuration must be rebuilt to write new logs. Clear can be done only if configuration is not locked.
+    pub fn clear_config() {
+        unsafe {
+            LOG_CONFIG = None;
+            LOG_FILE = None;
         }
     }
 
@@ -56,8 +73,14 @@ impl RustLogConfig {
     }
 
     /// Enables date display for each log entry
-    pub fn add_date(&mut self, add_date: bool) -> &mut RustLogConfig {
-        self.add_date = add_date;
+    pub fn display_date(&mut self, disp_date: bool) -> &mut RustLogConfig {
+        self.display_date = disp_date;
+        self
+    }
+
+    /// Enables caller display for each log entry
+    pub fn display_caller(&mut self, disp_caller: bool) -> &mut RustLogConfig {
+        self.display_caller = disp_caller;
         self
     }
 
@@ -89,13 +112,35 @@ impl RustLogConfig {
             if let Some(log_file) = self.log_to_file {
                 match File::options()
                     .create(true)
-                    .append(self.append_to_file)
                     .write(true)
+                    .append(self.append_to_file)
                     .open(log_file)
                 {
-                    Ok(f) => unsafe {
-                        LOG_FILE = Some(f);
-                    },
+                    Ok(f) => {
+                        unsafe {
+                            LOG_FILE = Some(f);
+                        };
+                        let date = format!("{}", Local::now().format("%Y-%m-%d %H:%M:%S"));
+
+                        // Check if file is empty
+                        match fs::read_to_string(log_file) {
+                            Ok(s) => {
+                                if s.len() != 0 && self.append_to_file {
+                                    get_log_file().unwrap().write_all("\n".as_bytes()).unwrap();
+                                }
+                            }
+                            Err(e) => return Err(format!("{e}")),
+                        };
+
+                        // Write date on 1st line
+                        match get_log_file()
+                            .unwrap()
+                            .write_all(format!("Log start on {date}\n").as_bytes())
+                        {
+                            Ok(_) => (),
+                            Err(e) => return Err(format!("{e}")),
+                        }
+                    }
                     Err(e) => return Err(format!("{e}")),
                 };
             }
@@ -122,7 +167,8 @@ mod tests {
                 log_to_terminal: true,
                 log_to_file: None,
                 append_to_file: false,
-                add_date: false,
+                display_date: false,
+                display_caller: false,
             });
         }
 
@@ -212,6 +258,7 @@ mod tests {
             Some(_) => (),
             None => return Err("LOG_FILE should be Some".to_string()),
         };
+
         match get_log_config() {
             Some(_) => Ok(()),
             None => Err("LOG_OPTIONS should be Some".to_string()),
@@ -233,7 +280,10 @@ mod tests {
         // Function shall return Err
         // log file shall be None
         // Log options shall be None
-        match RustLogConfig::new_config().configure() {
+        let result = RustLogConfig::new_config().configure();
+        remove_file("log.txt").unwrap_or(());
+        
+        match result {
             Ok(_) => Err("configure_log should return Err variant".to_string()),
             Err(_) => Ok(()),
         }
