@@ -9,7 +9,7 @@ use std::{
 
 use chrono::Local;
 
-use crate::data::{get_log_config, get_log_file, LOG_CONFIG, LOG_FILE};
+use crate::{data::{get_log_config, get_log_file, LOG_CONFIG, LOG_FILE}, LogSeverity};
 
 /// Log configuration structure
 #[derive(Clone, Copy)]
@@ -19,13 +19,15 @@ pub struct RustLogConfig {
     pub(crate) append_to_file: bool,
     pub(crate) display_date: bool,
     pub(crate) display_caller: bool,
+    pub(crate) display_severity: Option<LogSeverity>,
     pub(crate) locked: bool
 }
 
 impl RustLogConfig {
     /// Creates default log configuration :
     /// * All log destinations disabled
-    /// * No date added
+    /// * No date or caller's name added
+    /// * Severity is displayed with _INFO_ as minimum displayed level
     pub fn new_config() -> RustLogConfig {
         RustLogConfig {
             log_to_terminal: false,
@@ -34,6 +36,7 @@ impl RustLogConfig {
             display_date: false,
             display_caller: false,
             locked: false,
+            display_severity: Some(LogSeverity::Info),
         }
     }
 
@@ -95,6 +98,14 @@ impl RustLogConfig {
     /// Enables caller display for each log entry
     pub fn display_caller(&mut self, disp_caller: bool) -> &mut RustLogConfig {
         self.display_caller = disp_caller;
+        self
+    }
+
+    /// Enables severity display for each log entry :
+    /// * `None` to disable severity display
+    /// * `Some` to enable severity display, with minimal displayed level given in variant
+    pub fn display_severity(&mut self, disp_severity: Option<LogSeverity>) -> &mut RustLogConfig {
+        self.display_severity = disp_severity;
         self
     }
 
@@ -184,6 +195,7 @@ mod tests {
                 display_date: false,
                 display_caller: false,
                 locked: false,
+                display_severity: Some(crate::LogSeverity::Info),
             });
         }
 
@@ -360,7 +372,7 @@ mod tests {
         unsafe {
             crate::data::LOG_FILE = None;
         }
-        
+
         // New locked config
         RustLogConfig::new_config().enable_terminal().lock().configure().unwrap();
 
