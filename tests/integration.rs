@@ -39,7 +39,7 @@ fn write_1() -> Result<(), String> {
         .display_caller(true)
         .configure().unwrap();
 
-    write_log(rustlog::LogSeverity::Info, "Hello world !".to_string(), "MyModule".to_string());
+    write_log(rustlog::LogSeverity::Info, &"Hello world !".to_string(), &"MyModule".to_string());
 
     // Get log file content
     let logfile = fs::read_to_string("log1.txt").unwrap();
@@ -69,7 +69,7 @@ fn write_2() -> Result<(), String> {
         .display_caller(false)
         .configure().unwrap();
 
-    write_log(rustlog::LogSeverity::Error, "Hello world !".to_string(), "MyModule".to_string());
+    write_log(rustlog::LogSeverity::Error, &"Hello world !".to_string(), &"MyModule".to_string());
 
     // Get log file content
     let logfile = fs::read_to_string("log2.txt").unwrap();
@@ -108,7 +108,7 @@ fn write_3() -> Result<(), String> {
         .display_severity(None)
         .configure().unwrap();
 
-    write_log(rustlog::LogSeverity::Error, "Hello world !".to_string(), "MyModule".to_string());
+    write_log(rustlog::LogSeverity::Error, &"Hello world !".to_string(), &"MyModule".to_string());
 
     // Get log file content
     let logfile = fs::read_to_string("log3.txt").unwrap();
@@ -147,8 +147,8 @@ fn write_4() -> Result<(), String> {
         .display_severity(Some(rustlog::LogSeverity::Warning))
         .configure().unwrap();
 
-    write_log(rustlog::LogSeverity::Info, "Hello world !".to_string(), "MyModule".to_string());
-    write_log(rustlog::LogSeverity::Error, "Very bad mistake !".to_string(), "MyModule".to_string());
+    write_log(rustlog::LogSeverity::Info, &"Hello world !".to_string(), &"MyModule".to_string());
+    write_log(rustlog::LogSeverity::Error, &"Very bad mistake !".to_string(), &"MyModule".to_string());
 
     // Get log file content
     let logfile = fs::read_to_string("log4.txt").unwrap();

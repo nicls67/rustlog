@@ -72,5 +72,5 @@ Call `write_log` to generate a log entry. Format of log entry is _DATE-SEVERITY-
 use rustlog::write_log;
 use rustlog::LogSeverity;
 
-write_log(LogSeverity::Info, "New log text".to_string(), "From function".to_string());
+write_log(LogSeverity::Info, &"New log text".to_string(), &"From function".to_string());
 ```

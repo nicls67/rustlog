@@ -15,7 +15,7 @@ use crate::{
 /// Writes the given `text` to log.
 ///
 /// Severity, caller name and date will be added in format _DATE-SEVERITY-CALLER-TEXT_
-pub fn write_log(severity: LogSeverity, text: String, caller: String) {
+pub fn write_log(severity: LogSeverity, text: &String, caller: &String) {
     // Get config, if config is None, do nothing
     if let Some(config) = get_log_config() {
         let mut disp_severity = true;
@@ -65,8 +65,8 @@ pub fn write_log(severity: LogSeverity, text: String, caller: String) {
 /// Generates log string
 fn generate_log(
     severity: LogSeverity,
-    text: String,
-    caller: String,
+    text: &String,
+    caller: &String,
     date: String,
     config: &RustLogConfig,
 ) -> String {
@@ -111,7 +111,7 @@ mod tests {
             display_severity: None,
         };
 
-        match generate_log(crate::LogSeverity::Info, text, caller, date, &config).as_str() {
+        match generate_log(crate::LogSeverity::Info, &text, &caller, date, &config).as_str() {
             "Hello" => Ok(()),
             s => Err(format!("Wrong log string received : {s}")),
         }
@@ -132,7 +132,7 @@ mod tests {
             display_severity: None,
         };
 
-        match generate_log(crate::LogSeverity::Error, text, caller, date, &config).as_str() {
+        match generate_log(crate::LogSeverity::Error, &text, &caller, date, &config).as_str() {
             "Me - Hello" => Ok(()),
             s => Err(format!("Wrong log string received : {s}")),
         }
@@ -153,7 +153,7 @@ mod tests {
             display_severity: Some(LogSeverity::Info),
         };
 
-        match generate_log(LogSeverity::Info, text, caller, date, &config).as_str() {
+        match generate_log(LogSeverity::Info, &text, &caller, date, &config).as_str() {
             "2024-01-01 12:15:32 - INFO - Me - Hello" => Ok(()),
             s => Err(format!("Wrong log string received : {s}")),
         }
@@ -174,11 +174,11 @@ mod tests {
             display_severity: Some(LogSeverity::Warning),
         };
 
-        match generate_log(LogSeverity::Info, text, caller, date, &config).as_str() {
+        match generate_log(LogSeverity::Info, &text, &caller, date, &config).as_str() {
             "2024-01-01 12:15:32 - INFO - Me - Hello" => Ok(()),
             s => Err(format!("Wrong log string received : {s}")),
         }
     }
 
-    
+
 }
