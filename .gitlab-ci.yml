@@ -32,6 +32,7 @@ gendoc:
   tags:
     - rust
   artifacts:
+    name: doc
     paths:
       - target/doc
     expire_in: 1 week
