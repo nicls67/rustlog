@@ -3,14 +3,35 @@
 # This specific template is located at:
 # https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Rust.gitlab-ci.yml
 
-workflow:
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+#workflow:
+#  rules:
+#    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 stages:
+  - check
   - test
   - doc
 
+# Use clippy to check the project
+check:clippy:
+  stage: check
+  image: rust:latest
+  script:
+        - 'cargo clippy
+            --color always
+            --verbose
+            --all-targets
+            --all-features
+            --message-format=json
+            | gitlab-report -p clippy > gl-code-quality-report.json'
+
+  tags:
+    - rust
+  artifacts:
+        when: always
+        reports:
+            codequality: gl-code-quality-report.json
+        expire_in: 1 week
 
 # Use cargo to test the project
 test:latest:
