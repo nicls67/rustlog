@@ -6,34 +6,30 @@
 
 
 stages:
-  - build
   - test
+  - doc
+
 
 # Use cargo to test the project
 test:latest:
-  stage: build
+  stage: test
   image: rust:latest
   script:
     - rustc --version && cargo --version  # Print version info for debugging
     - cargo test --workspace --verbose -- --test-threads=1
   tags:
     - rust
-
-
-test:report:
-  stage: test
-  image: rustlang/rust:nightly
-  script:
-    - cargo install junitify
-    - cargo test -- --test-threads=1 --format=json -Z unstable-options --report-time | junitify --out $CI_PROJECT_DIR/tests/
   artifacts:
-    when: always
-    reports:
-      junit: $CI_PROJECT_DIR/tests/*.xml
+    expire_in: 1 week
+
+# Use cargo to generate doc
+gendoc:
+  stage: doc
+  image: rust:latest
+  script:
+    - rustc --version && cargo --version  # Print version info for debugging
+    - cargo doc
   tags:
     - rust
-
-#deploy:
-#  stage: deploy
-#  script: echo "Define your deployment script!"
-#  environment: production
+  artifacts:
+    expire_in: 1 week
