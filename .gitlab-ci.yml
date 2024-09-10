@@ -47,7 +47,7 @@ test:nightly:
   image: rustlang/rust:nightly
   script:
     - rustc --version && cargo --version  # Print version info for debugging
-    - cargo test --workspace --verbose -- --test-threads=1 --format json | gitlab-report -p test > report.xml
+    - cargo test --workspace --verbose -- -Z unstable-options --test-threads=1 --format json | gitlab-report -p test > report.xml
   tags:
     - rust
   artifacts:
