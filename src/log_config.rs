@@ -10,7 +10,10 @@ use std::{
 use chrono::Local;
 
 use crate::data::is_log_configured;
-use crate::{data::{get_log_config, get_log_file, LOG_CONFIG, LOG_FILE}, LogSeverity};
+use crate::{
+    data::{get_log_config, get_log_file, LOG_CONFIG, LOG_FILE},
+    LogSeverity,
+};
 
 /// Log configuration structure
 ///
@@ -129,8 +132,8 @@ impl RustLogConfig {
 
     /// Enables logging to the specified file.
     ///
-    /// This method sets the configuration to enable logging to the specified file. 
-    /// If `append` is `true`, new log entries will be added to the end of the file; 
+    /// This method sets the configuration to enable logging to the specified file.
+    /// If `append` is `true`, new log entries will be added to the end of the file;
     /// otherwise, the file will be overwritten.
     ///
     /// # Parameters
@@ -150,7 +153,7 @@ impl RustLogConfig {
     }
 
     ///
-    /// This method sets the configuration to disable logging to the file 
+    /// This method sets the configuration to disable logging to the file
     /// and stops appending new log messages.
     ///
     /// # Returns
@@ -200,7 +203,7 @@ impl RustLogConfig {
     ///
     /// # Parameters
     ///
-    /// * `disp_severity` - `None` to disable severity display. `Some` to enable severity display, with 
+    /// * `disp_severity` - `None` to disable severity display. `Some` to enable severity display, with
     ///    minimal displayed level given in variant.
     ///
     /// # Returns
@@ -212,7 +215,6 @@ impl RustLogConfig {
         }
         self
     }
-
 
     /// Configures the logging settings based on the current configuration.
     ///
@@ -340,7 +342,9 @@ mod tests {
         // Log options shall be Some
         RustLogConfig::new_config().enable_terminal().configure()?;
 
-        if get_log_file().is_some() { return Err("LOG_FILE should be None".to_string()); };
+        if get_log_file().is_some() {
+            return Err("LOG_FILE should be None".to_string());
+        };
 
         match get_log_config() {
             Some(_) => Ok(()),
@@ -495,7 +499,10 @@ mod tests {
         }
 
         // New locked config
-        RustLogConfig::new_config().enable_terminal().lock().configure()?;
+        RustLogConfig::new_config()
+            .enable_terminal()
+            .lock()
+            .configure()?;
 
         // Try to clear config
         RustLogConfig::clear_config();

@@ -7,4 +7,6 @@ edition = "2021"
 
 [dependencies]
 chrono = "0.4.37"
+
+[dev-dependencies]
 rusttests = { git = "http://serveur-dev.home/rust-libs/rusttests.git", tag = "1.0.0" }
