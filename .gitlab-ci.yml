@@ -46,10 +46,12 @@ test:latest:
   stage: test
   script:
     - rustc --version && cargo --version  # Print version info for debugging
-    - cargo test --workspace --verbose -- --test-threads=1
+    - cargo test --workspace --verbose -- --test-threads=1 --format json | gitlab-report -p test > report.xml
   tags:
     - rust
   artifacts:
+    reports:
+      junit: report.xml
     expire_in: 1 week
 
 # Use cargo to generate doc
