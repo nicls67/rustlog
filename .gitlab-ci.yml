@@ -13,8 +13,6 @@ default:
     - rustc --version 
     - cargo --version
     - cargo install gitlab-report
-    - git config --global user.name "Nicolas SIMON"
-    - git config --global user.email "nicolas.simon6790@gmail.com"
 
 stages:
   - check
