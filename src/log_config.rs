@@ -12,6 +12,18 @@ use chrono::Local;
 use crate::{data::{get_log_config, get_log_file, LOG_CONFIG, LOG_FILE}, LogSeverity};
 
 /// Log configuration structure
+///
+/// This structure holds the settings for logging configuration.
+///
+/// # Fields
+///
+/// * `log_to_terminal` - Whether to log messages to the terminal.
+/// * `log_to_file` - Optionally, a file path where logs will be written. If `None`, logging to file is disabled.
+/// * `append_to_file` - If `true`, new log messages will be appended to the specified file. If `false`, the file will be overwritten.
+/// * `display_date` - Whether to display the date in log messages.
+/// * `display_caller` - Whether to display the caller in log messages.
+/// * `display_severity` - Optionally, the minimum severity level to display in log messages. If `None`, severity display is disabled.
+/// * `locked` - If `true`, the configuration is locked and cannot be modified.
 #[derive(Clone, Copy)]
 pub struct RustLogConfig {
     pub(crate) log_to_terminal: bool,
@@ -20,14 +32,24 @@ pub struct RustLogConfig {
     pub(crate) display_date: bool,
     pub(crate) display_caller: bool,
     pub(crate) display_severity: Option<LogSeverity>,
-    pub(crate) locked: bool
+    pub(crate) locked: bool,
 }
 
 impl RustLogConfig {
-    /// Creates default log configuration :
-    /// * All log destinations disabled
-    /// * No date or caller's name added
-    /// * Severity is displayed with _INFO_ as minimum displayed level
+    /// Creates a default log configuration
+    ///
+    /// This method returns an instance of `RustLogConfig` with the following default settings:
+    /// * Logging to the terminal is disabled.
+    /// * Logging to a file is disabled.
+    /// * New log entries will not be appended to the file.
+    /// * Date display for log entries is disabled.
+    /// * Caller display for log entries is disabled.
+    /// * The configuration is not locked, allowing modifications.
+    /// * Log severity display is enabled with `INFO` as the minimum severity level.
+    ///
+    /// # Returns
+    ///
+    /// An instance of `RustLogConfig` with the default settings.
     pub fn new_config() -> RustLogConfig {
         RustLogConfig {
             log_to_terminal: false,
@@ -40,9 +62,21 @@ impl RustLogConfig {
         }
     }
 
-    /// Deletes log configuration.
+    /// Deletes the current log configuration.
     ///
-    /// Configuration must be rebuilt to write new logs. Clear can be done only if configuration is not locked.
+    /// This function removes the current log configuration, including the log file reference.
+    /// This operation can only be performed if the configuration is not locked.
+    ///
+    /// # Safety
+    ///
+    /// This function uses `unsafe` code to modify static mutable variables. Ensure that the
+    /// configuration and log file are managed properly when calling this function to avoid
+    /// potential data races or inconsistencies.
+    ///
+    /// # Panics
+    ///
+    /// This function does not panic.
+    ///
     pub fn clear_config() {
         if let Some(config) = get_log_config() {
             if !config.locked {
@@ -54,35 +88,67 @@ impl RustLogConfig {
         }
     }
 
-    /// Locks configuration
     ///
-    /// After call of `lock`, configuration cannot be cleared
+    /// Once this method is called, the configuration cannot be cleared or modified.
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
+    ///
     pub fn lock(&mut self) -> &mut RustLogConfig {
         self.locked = true;
         self
     }
 
-    /// Enables logging to terminal
+    ///
+    /// This method sets the configuration to enable logging to the terminal.
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
     pub fn enable_terminal(&mut self) -> &mut RustLogConfig {
         self.log_to_terminal = true;
         self
     }
 
-    /// Disables logging to terminal
+    ///
+    /// This method sets the configuration to disable logging to the terminal.
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
     pub fn disable_terminal(&mut self) -> &mut RustLogConfig {
         self.log_to_terminal = false;
         self
     }
 
-    /// Enables logging to file `log_file`
-    /// If `append` is `True`, new content will be added at the end of the selected file, else file will be overriden
+    /// Enables logging to the specified file.
+    ///
+    /// This method sets the configuration to enable logging to the specified file. 
+    /// If `append` is `true`, new log entries will be added to the end of the file; 
+    /// otherwise, the file will be overwritten.
+    ///
+    /// # Parameters
+    ///
+    /// * `log_file` - A string slice that holds the name of the file to log to.
+    /// * `append` - A boolean value indicating whether to append to the file or overwrite it.
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
     pub fn enable_file(&mut self, log_file: &'static str, append: bool) -> &mut RustLogConfig {
         self.log_to_file = Some(log_file);
         self.append_to_file = append;
         self
     }
 
-    /// Disables logging to file
+    ///
+    /// This method sets the configuration to disable logging to the file 
+    /// and stops appending new log messages.
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
     pub fn disable_file(&mut self) -> &mut RustLogConfig {
         self.log_to_file = None;
         self.append_to_file = false;
@@ -90,34 +156,62 @@ impl RustLogConfig {
     }
 
     /// Enables date display for each log entry
+    ///
+    /// # Parameters
+    ///
+    /// * `disp_date` - A boolean indicating whether to display the date for each log entry.
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
     pub fn display_date(&mut self, disp_date: bool) -> &mut RustLogConfig {
         self.display_date = disp_date;
         self
     }
 
     /// Enables caller display for each log entry
+    ///
+    /// # Parameters
+    ///
+    /// * `disp_caller` - A boolean indicating whether to display the caller for each log entry.
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
     pub fn display_caller(&mut self, disp_caller: bool) -> &mut RustLogConfig {
         self.display_caller = disp_caller;
         self
     }
 
-    /// Enables severity display for each log entry :
-    /// * `None` to disable severity display
-    /// * `Some` to enable severity display, with minimal displayed level given in variant
+    /// Enables severity display for each log entry.
+    ///
+    /// # Parameters
+    ///
+    /// * `disp_severity` - `None` to disable severity display. `Some` to enable severity display, with 
+    ///    minimal displayed level given in variant.
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
     pub fn display_severity(&mut self, disp_severity: Option<LogSeverity>) -> &mut RustLogConfig {
         self.display_severity = disp_severity;
         self
     }
 
-    /// ## Logging configuration
+
+    /// Configures the logging settings based on the current configuration.
     ///
-    /// Configures logging according to the selected configuration
-    /// This function can be called only once, if called a second time, will return `Err`
+    /// This method applies the current `RustLogConfig` instance's settings to configure
+    /// logging destinations and options. Logging can be configured to terminal, file, or both.
+    /// The configuration will be saved and can no longer be modified once applied.
+    /// If logging is already configured, this method will return an error.
     ///
-    /// ### Returns
-    /// Returns `Err` variant in the following cases :
-    /// * When called twice (even by multiple crates)
-    /// * If all logging destination are disabled
+    /// # Returns
+    ///
+    /// A `Result` indicating success or failure:
+    /// * `Ok(())` if logging is successfully configured.
+    /// * `Err(String)` if logging is already configured, no log destinations are specified,
+    ///   or if an error occurs while creating the log file.
     pub fn configure(&self) -> Result<(), String> {
         // Logging is already configured, return Err
         if get_log_config().is_some() {
@@ -129,7 +223,7 @@ impl RustLogConfig {
             }
 
             // At least one log destination must be selected
-            if self.log_to_terminal == false && self.log_to_file.is_none() {
+            if !self.log_to_terminal && self.log_to_file.is_none() {
                 return Err("All log destinations are disabled".to_string());
             }
 
@@ -150,7 +244,7 @@ impl RustLogConfig {
                         // Check if file is empty
                         match fs::read_to_string(log_file) {
                             Ok(s) => {
-                                if s.len() != 0 && self.append_to_file {
+                                if !s.is_empty() && self.append_to_file {
                                     get_log_file().unwrap().write_all("\n".as_bytes()).unwrap();
                                 }
                             }
@@ -216,10 +310,7 @@ mod tests {
         // Log options shall be Some
         RustLogConfig::new_config().enable_terminal().configure()?;
 
-        match get_log_file() {
-            Some(_) => return Err("LOG_FILE should be None".to_string()),
-            None => (),
-        };
+        if get_log_file().is_some() { return Err("LOG_FILE should be None".to_string()); };
 
         match get_log_config() {
             Some(_) => Ok(()),
@@ -352,7 +443,7 @@ mod tests {
         }
 
         // New config unlocked by default
-        RustLogConfig::new_config().enable_terminal().configure().unwrap();
+        RustLogConfig::new_config().enable_terminal().configure()?;
 
         // Try to clear config
         RustLogConfig::clear_config();
@@ -374,7 +465,7 @@ mod tests {
         }
 
         // New locked config
-        RustLogConfig::new_config().enable_terminal().lock().configure().unwrap();
+        RustLogConfig::new_config().enable_terminal().lock().configure()?;
 
         // Try to clear config
         RustLogConfig::clear_config();

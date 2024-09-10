@@ -14,7 +14,13 @@ use crate::{
 
 /// Writes the given `text` to log.
 ///
-/// Severity, caller name and date will be added in format _DATE-SEVERITY-CALLER-TEXT_
+/// Severity, caller name, and date will be added in the format _DATE-SEVERITY-CALLER-TEXT_.
+///
+/// # Arguments
+///
+/// * `severity` - The severity level of the log (Verbose, Info, Warning, Error).
+/// * `text` - The log message to be written.
+/// * `caller` - The name of the function or module that is writing the log.
 pub fn write_log(severity: LogSeverity, text: &String, caller: &String) {
     // Get config, if config is None, do nothing
     if let Some(config) = get_log_config() {
@@ -24,24 +30,11 @@ pub fn write_log(severity: LogSeverity, text: &String, caller: &String) {
             // Check if message should be logged according to severity
             disp_severity = match min_severity {
                 LogSeverity::Verbose => true,
-                LogSeverity::Info => {
-                    if severity != LogSeverity::Verbose {
-                        true
-                    } else {
-                        false
-                    }
+                LogSeverity::Info => severity != LogSeverity::Verbose,
+                LogSeverity::Warning => {
+                    matches!(severity, LogSeverity::Error | LogSeverity::Warning)
                 }
-                LogSeverity::Warning => match severity {
-                    LogSeverity::Error | LogSeverity::Warning => true,
-                    _ => false,
-                },
-                LogSeverity::Error => {
-                    if severity == LogSeverity::Error {
-                        true
-                    } else {
-                        false
-                    }
-                }
+                LogSeverity::Error => severity == LogSeverity::Error,
             };
         }
 
@@ -62,7 +55,22 @@ pub fn write_log(severity: LogSeverity, text: &String, caller: &String) {
     }
 }
 
-/// Generates log string
+/// Generates a formatted log string based on the provided configuration.
+///
+/// Combines the date, severity, caller, and the log message into a single string.
+/// The format of the log string depends on the `RustLogConfig` settings.
+///
+/// # Arguments
+///
+/// * `severity` - The severity level of the log (Verbose, Info, Warning, Error).
+/// * `text` - The log message to be written.
+/// * `caller` - The name of the function or module that is writing the log.
+/// * `date` - The current date and time as a string.
+/// * `config` - A reference to the configuration settings for the logger.
+///
+/// # Returns
+///
+/// A `String` containing the formatted log message.
 fn generate_log(
     severity: LogSeverity,
     text: &String,
@@ -84,9 +92,9 @@ fn generate_log(
         output = output + sev_str + " - ";
     }
     if config.display_caller {
-        output = output + &caller + " - ";
+        output = output + caller + " - ";
     }
-    output += &text;
+    output += text;
     output
 }
 
@@ -111,7 +119,7 @@ mod tests {
             display_severity: None,
         };
 
-        match generate_log(crate::LogSeverity::Info, &text, &caller, date, &config).as_str() {
+        match generate_log(LogSeverity::Info, &text, &caller, date, &config).as_str() {
             "Hello" => Ok(()),
             s => Err(format!("Wrong log string received : {s}")),
         }
@@ -132,7 +140,7 @@ mod tests {
             display_severity: None,
         };
 
-        match generate_log(crate::LogSeverity::Error, &text, &caller, date, &config).as_str() {
+        match generate_log(LogSeverity::Error, &text, &caller, date, &config).as_str() {
             "Me - Hello" => Ok(()),
             s => Err(format!("Wrong log string received : {s}")),
         }
@@ -179,6 +187,4 @@ mod tests {
             s => Err(format!("Wrong log string received : {s}")),
         }
     }
-
-
 }
