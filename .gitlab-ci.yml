@@ -6,6 +6,13 @@
 #workflow:
 #  rules:
 #    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+image: rust:latest
+
+default:
+  before_script:
+    - rustc --version 
+    - cargo --version
+    - cargo install gitlab-report
 
 stages:
   - check
@@ -15,8 +22,9 @@ stages:
 # Use clippy to check the project
 check:clippy:
   stage: check
-  image: rust:latest
   script:
+        - rustc --version && cargo  --version  # Print version info for debugging
+        - rustup component add clippy
         - 'cargo clippy
             --color always
             --verbose
@@ -36,7 +44,6 @@ check:clippy:
 # Use cargo to test the project
 test:latest:
   stage: test
-  image: rust:latest
   script:
     - rustc --version && cargo --version  # Print version info for debugging
     - cargo test --workspace --verbose -- --test-threads=1
@@ -48,7 +55,6 @@ test:latest:
 # Use cargo to generate doc
 gendoc:
   stage: doc
-  image: rust:latest
   script:
     - rustc --version && cargo  --version  # Print version info for debugging
     - cargo doc --no-deps --color=always --verbose
