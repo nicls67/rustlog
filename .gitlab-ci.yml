@@ -27,8 +27,8 @@ gendoc:
   stage: doc
   image: rust:latest
   script:
-    - rustc --version && cargo --version  # Print version info for debugging
-    - cargo doc
+    - rustc --version && cargo  --version  # Print version info for debugging
+    - cargo doc --no-deps --color=always --verbose
   tags:
     - rust
   artifacts:
