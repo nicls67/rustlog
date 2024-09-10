@@ -18,12 +18,12 @@ stages:
   - check
   - test
   - doc
+  - bench
 
 # Use clippy to check the project
 check:clippy:
   stage: check
   script:
-        - rustc --version && cargo  --version  # Print version info for debugging
         - rustup component add clippy
         - 'cargo clippy
             --color always
@@ -46,7 +46,6 @@ test:nightly:
   stage: test
   image: rustlang/rust:nightly
   script:
-    - rustc --version && cargo --version  # Print version info for debugging
     - cargo test --workspace --verbose -- -Z unstable-options --test-threads=1 --format json | gitlab-report -p test > report.xml
   tags:
     - rust
@@ -55,11 +54,23 @@ test:nightly:
       junit: report.xml
     expire_in: 1 week
 
+# Use cargo to bench the project
+bench:nightly:
+  stage: bench
+  image: rustlang/rust:nightly
+  script:
+    - cargo bench -- -Z unstable-options --format json | gitlab-report -p bench > metrics.txt
+  tags:
+    - rust
+  artifacts:
+    reports:
+      metrics: metrics.xml
+    expire_in: 1 week
+
 # Use cargo to generate doc
 gendoc:
   stage: doc
   script:
-    - rustc --version && cargo  --version  # Print version info for debugging
     - cargo doc --no-deps --color=always --verbose
   tags:
     - rust
