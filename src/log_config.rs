@@ -9,6 +9,7 @@ use std::{
 
 use chrono::Local;
 
+use crate::data::is_log_configured;
 use crate::{data::{get_log_config, get_log_file, LOG_CONFIG, LOG_FILE}, LogSeverity};
 
 /// Log configuration structure
@@ -107,7 +108,9 @@ impl RustLogConfig {
     ///
     /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
     pub fn enable_terminal(&mut self) -> &mut RustLogConfig {
-        self.log_to_terminal = true;
+        if !is_log_configured() {
+            self.log_to_terminal = true;
+        }
         self
     }
 
@@ -118,7 +121,9 @@ impl RustLogConfig {
     ///
     /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
     pub fn disable_terminal(&mut self) -> &mut RustLogConfig {
-        self.log_to_terminal = false;
+        if !is_log_configured() {
+            self.log_to_terminal = false;
+        }
         self
     }
 
@@ -137,8 +142,10 @@ impl RustLogConfig {
     ///
     /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
     pub fn enable_file(&mut self, log_file: &'static str, append: bool) -> &mut RustLogConfig {
-        self.log_to_file = Some(log_file);
-        self.append_to_file = append;
+        if !is_log_configured() {
+            self.log_to_file = Some(log_file);
+            self.append_to_file = append;
+        }
         self
     }
 
@@ -150,8 +157,10 @@ impl RustLogConfig {
     ///
     /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
     pub fn disable_file(&mut self) -> &mut RustLogConfig {
-        self.log_to_file = None;
-        self.append_to_file = false;
+        if !is_log_configured() {
+            self.log_to_file = None;
+            self.append_to_file = false;
+        }
         self
     }
 
@@ -165,7 +174,9 @@ impl RustLogConfig {
     ///
     /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
     pub fn display_date(&mut self, disp_date: bool) -> &mut RustLogConfig {
-        self.display_date = disp_date;
+        if !is_log_configured() {
+            self.display_date = disp_date;
+        }
         self
     }
 
@@ -179,7 +190,9 @@ impl RustLogConfig {
     ///
     /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
     pub fn display_caller(&mut self, disp_caller: bool) -> &mut RustLogConfig {
-        self.display_caller = disp_caller;
+        if !is_log_configured() {
+            self.display_caller = disp_caller;
+        }
         self
     }
 
@@ -194,7 +207,9 @@ impl RustLogConfig {
     ///
     /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
     pub fn display_severity(&mut self, disp_severity: Option<LogSeverity>) -> &mut RustLogConfig {
-        self.display_severity = disp_severity;
+        if !is_log_configured() {
+            self.display_severity = disp_severity;
+        }
         self
     }
 
@@ -214,7 +229,7 @@ impl RustLogConfig {
     ///   or if an error occurs while creating the log file.
     pub fn configure(&self) -> Result<(), String> {
         // Logging is already configured, return Err
-        if get_log_config().is_some() {
+        if is_log_configured() {
             Err(String::from("Logging already configured"))
         } else {
             // Save configuration
@@ -271,12 +286,12 @@ impl RustLogConfig {
 
 #[cfg(test)]
 mod tests {
-    use std::fs::remove_file;
-
     use crate::{
         data::{get_log_config, get_log_file},
         RustLogConfig,
     };
+    use rusttests::{check_result, check_value, CheckType};
+    use std::fs::remove_file;
 
     #[test]
     fn log_already_configured() -> Result<(), String> {
@@ -293,10 +308,25 @@ mod tests {
             });
         }
 
-        match RustLogConfig::new_config().configure() {
-            Ok(_) => Err("configure_log should return Err variant".to_string()),
-            Err(_) => Ok(()),
-        }
+        check_result((1, 1), RustLogConfig::new_config().configure(), false)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn log_already_configured_with_new_config() -> Result<(), String> {
+        // Set config to None
+        unsafe { crate::data::LOG_CONFIG = None }
+        unsafe { crate::data::LOG_FILE = None }
+
+        let mut config = RustLogConfig::new_config();
+        config.enable_terminal();
+        config.configure()?;
+        config.disable_terminal();
+
+        check_value((1, 1), &config.log_to_terminal, &true, CheckType::Equal)?;
+
+        Ok(())
     }
 
     #[test]

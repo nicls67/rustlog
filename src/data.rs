@@ -18,6 +18,21 @@ pub fn get_log_config() -> Option<&'static RustLogConfig> {
     unsafe { LOG_CONFIG.as_ref() }
 }
 
+/// Checks if the global log configuration is set.
+///
+/// # Safety
+///
+/// This function performs an unsafe operation by dereferencing a raw pointer.
+/// Make sure the global `LOG_CONFIG` has been properly initialized before
+/// calling this function to avoid undefined behavior.
+///
+/// # Returns
+///
+/// `true` if the global log configuration is set, `false` otherwise.
+pub fn is_log_configured() -> bool {
+    unsafe { LOG_CONFIG }.is_some()
+}
+
 /// Returns a reference to the global log file if it is set.
 ///
 /// # Safety
