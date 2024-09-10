@@ -42,8 +42,9 @@ check:clippy:
         expire_in: 1 week
 
 # Use cargo to test the project
-test:latest:
+test:nightly:
   stage: test
+  image: rustlang/rust:nightly
   script:
     - rustc --version && cargo --version  # Print version info for debugging
     - cargo test --workspace --verbose -- --test-threads=1 --format json | gitlab-report -p test > report.xml
