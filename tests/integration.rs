@@ -37,8 +37,7 @@ fn write_1() -> Result<(), String> {
     RustLogConfig::new_config()
         .enable_file("log1.txt", false)
         .display_caller(true)
-        .configure()
-        .unwrap();
+        .configure()?;
 
     write_log(
         rustlog::LogSeverity::Info,
@@ -72,8 +71,7 @@ fn write_2() -> Result<(), String> {
     RustLogConfig::new_config()
         .enable_file("log2.txt", true)
         .display_caller(false)
-        .configure()
-        .unwrap();
+        .configure()?;
 
     write_log(
         rustlog::LogSeverity::Error,
@@ -116,8 +114,7 @@ fn write_3() -> Result<(), String> {
         .enable_file("log3.txt", true)
         .display_caller(false)
         .display_severity(None)
-        .configure()
-        .unwrap();
+        .configure()?;
 
     write_log(
         rustlog::LogSeverity::Error,
@@ -160,8 +157,7 @@ fn write_4() -> Result<(), String> {
         .enable_file("log4.txt", true)
         .display_caller(false)
         .display_severity(Some(rustlog::LogSeverity::Warning))
-        .configure()
-        .unwrap();
+        .configure()?;
 
     write_log(
         rustlog::LogSeverity::Info,
