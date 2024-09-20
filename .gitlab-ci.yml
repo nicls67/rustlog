@@ -3,9 +3,6 @@
 # This specific template is located at:
 # https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Rust.gitlab-ci.yml
 
-workflow:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 image: rust:latest
 
 default:
@@ -60,6 +57,8 @@ gendoc:
     - cargo doc --no-deps --color=always --verbose
   tags:
     - rust
+  rules:
+    - if: $CI_COMMIT_TAG                 # Run this job when a tag is created
   artifacts:
     name: doc
     paths:
