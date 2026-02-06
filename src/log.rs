@@ -21,6 +21,18 @@ use crate::{
 /// * `severity` - The severity level of the log (Verbose, Info, Warning, Error).
 /// * `text` - The log message to be written.
 /// * `caller` - The name of the function or module that is writing the log.
+///
+/// # Returns
+///
+/// Nothing.
+///
+/// # Error handling
+///
+/// This function does not return any error.
+///
+/// # Panicking
+///
+/// This function will never panic.
 pub fn write_log(severity: LogSeverity, text: &String, caller: &String) {
     // Get config, if config is None, do nothing
     if let Some(config) = get_log_config() {
@@ -71,6 +83,14 @@ pub fn write_log(severity: LogSeverity, text: &String, caller: &String) {
 /// # Returns
 ///
 /// A `String` containing the formatted log message.
+///
+/// # Error handling
+///
+/// This function does not return any error.
+///
+/// # Panicking
+///
+/// This function will never panic.
 fn generate_log(
     severity: LogSeverity,
     text: &String,
