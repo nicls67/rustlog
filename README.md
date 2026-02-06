@@ -1,14 +1,23 @@
 # RustLog
 
-A logging library for Rust projects
+A logging library for Rust projects.
+
+## Installation
+
+Add this to your `Cargo.toml`:
+
+```toml
+[dependencies]
+rustlog = "1.1.0"
+```
 
 ## How it works ?
 
 **RustLog** logs data from main application or from another library either on terminal or in a specific file.
-It can be configured only once, meaning the first call of `configure_log` will define once for all how the logging will work.
+It can be configured only once, meaning the first call of `configure` will define once for all how the logging will work.
 
-To log some text, use `write`.
-Calls of `write` method will never panick or return an error to avoid any perturbation in main program.
+To log some text, use `write_log`.
+Calls of `write_log` method will never panic or return an error to avoid any perturbation in main program.
 
 ## Usage
 
@@ -36,16 +45,16 @@ RustLogConfig::new_config().enable_file("log.txt", true).configure().unwrap();
 
 ### Configure severity
 
-Message severity can be added to log message. Four severities exists :
+Message severity can be added to log message. Four severities exist :
 
 * `VERB` : Verbose mode
 * `INFO` : Information message
 * `WARNING` : Warning message
 * `ERROR` : Error message
 
-Log configuration contains the minimal severity level which will be displayed. For example, if `INFO` is selected as minimal level, verbose messages will not be displayed, if `ERROR` is selected, only erorr messages will be displayed.
+Log configuration contains the minimal severity level which will be displayed. For example, if `INFO` is selected as minimal level, verbose messages will not be displayed, if `ERROR` is selected, only error messages will be displayed.
 
-`display_severity` method shall be used to configure enable or disable severity display, and configure minimal displayed level.
+`display_severity` method shall be used to enable or disable severity display, and configure minimal displayed level.
 
 By default, when calling `RustLogConfig::new_config`, logging is configured to display message severity before the log message itself, with `INFO` as minimal log display.
 

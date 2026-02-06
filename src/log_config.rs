@@ -54,6 +54,14 @@ impl RustLogConfig {
     /// # Returns
     ///
     /// An instance of `RustLogConfig` with the default settings.
+    ///
+    /// # Error handling
+    ///
+    /// This function does not return any error.
+    ///
+    /// # Panicking
+    ///
+    /// This function will never panic.
     pub fn new_config() -> RustLogConfig {
         RustLogConfig {
             log_to_terminal: false,
@@ -77,7 +85,15 @@ impl RustLogConfig {
     /// configuration and log file are managed properly when calling this function to avoid
     /// potential data races or inconsistencies.
     ///
-    /// # Panics
+    /// # Returns
+    ///
+    /// Nothing.
+    ///
+    /// # Error handling
+    ///
+    /// This function does not return any error.
+    ///
+    /// # Panicking
     ///
     /// This function does not panic.
     ///
@@ -99,6 +115,13 @@ impl RustLogConfig {
     ///
     /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
     ///
+    /// # Error handling
+    ///
+    /// This function does not return any error.
+    ///
+    /// # Panicking
+    ///
+    /// This function will never panic.
     pub fn lock(&mut self) -> &mut RustLogConfig {
         self.locked = true;
         self
@@ -110,6 +133,14 @@ impl RustLogConfig {
     /// # Returns
     ///
     /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
+    ///
+    /// # Error handling
+    ///
+    /// This function does not return any error.
+    ///
+    /// # Panicking
+    ///
+    /// This function will never panic.
     pub fn enable_terminal(&mut self) -> &mut RustLogConfig {
         if !is_log_configured() {
             self.log_to_terminal = true;
@@ -123,6 +154,14 @@ impl RustLogConfig {
     /// # Returns
     ///
     /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
+    ///
+    /// # Error handling
+    ///
+    /// This function does not return any error.
+    ///
+    /// # Panicking
+    ///
+    /// This function will never panic.
     pub fn disable_terminal(&mut self) -> &mut RustLogConfig {
         if !is_log_configured() {
             self.log_to_terminal = false;
@@ -144,6 +183,14 @@ impl RustLogConfig {
     /// # Returns
     ///
     /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
+    ///
+    /// # Error handling
+    ///
+    /// This function does not return any error.
+    ///
+    /// # Panicking
+    ///
+    /// This function will never panic.
     pub fn enable_file(&mut self, log_file: &'static str, append: bool) -> &mut RustLogConfig {
         if !is_log_configured() {
             self.log_to_file = Some(log_file);
@@ -159,6 +206,14 @@ impl RustLogConfig {
     /// # Returns
     ///
     /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
+    ///
+    /// # Error handling
+    ///
+    /// This function does not return any error.
+    ///
+    /// # Panicking
+    ///
+    /// This function will never panic.
     pub fn disable_file(&mut self) -> &mut RustLogConfig {
         if !is_log_configured() {
             self.log_to_file = None;
@@ -176,6 +231,14 @@ impl RustLogConfig {
     /// # Returns
     ///
     /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
+    ///
+    /// # Error handling
+    ///
+    /// This function does not return any error.
+    ///
+    /// # Panicking
+    ///
+    /// This function will never panic.
     pub fn display_date(&mut self, disp_date: bool) -> &mut RustLogConfig {
         if !is_log_configured() {
             self.display_date = disp_date;
@@ -192,6 +255,14 @@ impl RustLogConfig {
     /// # Returns
     ///
     /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
+    ///
+    /// # Error handling
+    ///
+    /// This function does not return any error.
+    ///
+    /// # Panicking
+    ///
+    /// This function will never panic.
     pub fn display_caller(&mut self, disp_caller: bool) -> &mut RustLogConfig {
         if !is_log_configured() {
             self.display_caller = disp_caller;
@@ -209,6 +280,14 @@ impl RustLogConfig {
     /// # Returns
     ///
     /// A mutable reference to the `RustLogConfig` instance, allowing method chaining.
+    ///
+    /// # Error handling
+    ///
+    /// This function does not return any error.
+    ///
+    /// # Panicking
+    ///
+    /// This function will never panic.
     pub fn display_severity(&mut self, disp_severity: Option<LogSeverity>) -> &mut RustLogConfig {
         if !is_log_configured() {
             self.display_severity = disp_severity;
@@ -229,6 +308,17 @@ impl RustLogConfig {
     /// * `Ok(())` if logging is successfully configured.
     /// * `Err(String)` if logging is already configured, no log destinations are specified,
     ///   or if an error occurs while creating the log file.
+    ///
+    /// # Error handling
+    ///
+    /// Returns an error string if:
+    /// * Logging is already configured.
+    /// * All log destinations are disabled.
+    /// * File creation/writing fails.
+    ///
+    /// # Panicking
+    ///
+    /// This function will never panic.
     pub fn configure(&self) -> Result<(), String> {
         // Logging is already configured, return Err
         if is_log_configured() {
@@ -293,9 +383,11 @@ mod tests {
         RustLogConfig,
     };
     use rusttests::{check_result, check_value, CheckType};
+    use serial_test::serial;
     use std::fs::remove_file;
 
     #[test]
+    #[serial]
     fn log_already_configured() -> Result<(), String> {
         // Set config to Some
         unsafe {
@@ -316,6 +408,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn log_already_configured_with_new_config() -> Result<(), String> {
         // Set config to None
         unsafe { crate::data::LOG_CONFIG = None }
@@ -332,6 +425,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn log_not_configured_terminal() -> Result<(), String> {
         // Set config to None
         unsafe { crate::data::LOG_CONFIG = None }
@@ -353,6 +447,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn log_not_configured_file() -> Result<(), String> {
         // Set config to None
         unsafe {
@@ -385,6 +480,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn log_not_configured_both() -> Result<(), String> {
         // Set config to None
         unsafe {
@@ -418,6 +514,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn log_not_configured_all_disabled() -> Result<(), String> {
         // Set config to None
         unsafe {
@@ -442,7 +539,12 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn enable_terminal() -> Result<(), String> {
+        unsafe {
+            crate::data::LOG_CONFIG = None;
+            crate::data::LOG_FILE = None;
+        }
         let mut binding = RustLogConfig::new_config();
         let config = binding.enable_terminal();
 
@@ -453,7 +555,12 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn enable_file() -> Result<(), String> {
+        unsafe {
+            crate::data::LOG_CONFIG = None;
+            crate::data::LOG_FILE = None;
+        }
         let mut binding = RustLogConfig::new_config();
         let config = binding.enable_file("log.txt", true);
 
@@ -467,6 +574,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn clear_config_unlocked() -> Result<(), String> {
         // Set config to None
         unsafe {
@@ -489,6 +597,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn clear_config_locked() -> Result<(), String> {
         // Set config to None
         unsafe {

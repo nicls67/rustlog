@@ -5,8 +5,10 @@
 use std::fs::{self, remove_file};
 
 use rustlog::{write_log, RustLogConfig};
+use serial_test::serial;
 
 #[test]
+#[serial]
 fn log_configuration() -> Result<(), String> {
     RustLogConfig::clear_config();
 
@@ -27,6 +29,7 @@ fn log_configuration() -> Result<(), String> {
 }
 
 #[test]
+#[serial]
 fn write_1() -> Result<(), String> {
     RustLogConfig::clear_config();
 
@@ -61,6 +64,7 @@ fn write_1() -> Result<(), String> {
 }
 
 #[test]
+#[serial]
 fn write_2() -> Result<(), String> {
     RustLogConfig::clear_config();
 
@@ -103,6 +107,7 @@ fn write_2() -> Result<(), String> {
 }
 
 #[test]
+#[serial]
 fn write_3() -> Result<(), String> {
     RustLogConfig::clear_config();
 
@@ -146,6 +151,7 @@ fn write_3() -> Result<(), String> {
 }
 
 #[test]
+#[serial]
 fn write_4() -> Result<(), String> {
     RustLogConfig::clear_config();
 
