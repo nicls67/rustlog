@@ -11,7 +11,7 @@ use chrono::Local;
 
 use crate::data::is_log_configured;
 use crate::{
-    data::{get_log_config, get_log_file, LOG_CONFIG, LOG_FILE},
+    data::{get_log_config, G_LOG_CONFIG, G_LOG_FILE},
     LogSeverity,
 };
 
@@ -79,12 +79,6 @@ impl RustLogConfig {
     /// This function removes the current log configuration, including the log file reference.
     /// This operation can only be performed if the configuration is not locked.
     ///
-    /// # Safety
-    ///
-    /// This function uses `unsafe` code to modify static mutable variables. Ensure that the
-    /// configuration and log file are managed properly when calling this function to avoid
-    /// potential data races or inconsistencies.
-    ///
     /// # Returns
     ///
     /// Nothing.
@@ -96,18 +90,16 @@ impl RustLogConfig {
     /// # Panicking
     ///
     /// This function does not panic.
-    ///
     pub fn clear_config() {
-        if let Some(config) = get_log_config() {
-            if !config.locked {
-                unsafe {
-                    LOG_CONFIG = None;
-                    LOG_FILE = None;
-                }
+        if let Some(l_config) = get_log_config() {
+            if !l_config.locked {
+                *G_LOG_CONFIG.lock().unwrap() = None;
+                *G_LOG_FILE.lock().unwrap() = None;
             }
         }
     }
 
+    /// Locks the configuration to prevent further modifications.
     ///
     /// Once this method is called, the configuration cannot be cleared or modified.
     ///
@@ -127,6 +119,7 @@ impl RustLogConfig {
         self
     }
 
+    /// Enables logging to the terminal.
     ///
     /// This method sets the configuration to enable logging to the terminal.
     ///
@@ -148,6 +141,7 @@ impl RustLogConfig {
         self
     }
 
+    /// Disables logging to the terminal.
     ///
     /// This method sets the configuration to disable logging to the terminal.
     ///
@@ -172,13 +166,13 @@ impl RustLogConfig {
     /// Enables logging to the specified file.
     ///
     /// This method sets the configuration to enable logging to the specified file.
-    /// If `append` is `true`, new log entries will be added to the end of the file;
+    /// If `p_append` is `true`, new log entries will be added to the end of the file;
     /// otherwise, the file will be overwritten.
     ///
     /// # Parameters
     ///
-    /// * `log_file` - A string slice that holds the name of the file to log to.
-    /// * `append` - A boolean value indicating whether to append to the file or overwrite it.
+    /// * `p_log_file` - A string slice that holds the name of the file to log to.
+    /// * `p_append` - A boolean value indicating whether to append to the file or overwrite it.
     ///
     /// # Returns
     ///
@@ -191,14 +185,15 @@ impl RustLogConfig {
     /// # Panicking
     ///
     /// This function will never panic.
-    pub fn enable_file(&mut self, log_file: &'static str, append: bool) -> &mut RustLogConfig {
+    pub fn enable_file(&mut self, p_log_file: &'static str, p_append: bool) -> &mut RustLogConfig {
         if !is_log_configured() {
-            self.log_to_file = Some(log_file);
-            self.append_to_file = append;
+            self.log_to_file = Some(p_log_file);
+            self.append_to_file = p_append;
         }
         self
     }
 
+    /// Disables logging to the file.
     ///
     /// This method sets the configuration to disable logging to the file
     /// and stops appending new log messages.
@@ -226,7 +221,7 @@ impl RustLogConfig {
     ///
     /// # Parameters
     ///
-    /// * `disp_date` - A boolean indicating whether to display the date for each log entry.
+    /// * `p_disp_date` - A boolean indicating whether to display the date for each log entry.
     ///
     /// # Returns
     ///
@@ -239,9 +234,9 @@ impl RustLogConfig {
     /// # Panicking
     ///
     /// This function will never panic.
-    pub fn display_date(&mut self, disp_date: bool) -> &mut RustLogConfig {
+    pub fn display_date(&mut self, p_disp_date: bool) -> &mut RustLogConfig {
         if !is_log_configured() {
-            self.display_date = disp_date;
+            self.display_date = p_disp_date;
         }
         self
     }
@@ -250,7 +245,7 @@ impl RustLogConfig {
     ///
     /// # Parameters
     ///
-    /// * `disp_caller` - A boolean indicating whether to display the caller for each log entry.
+    /// * `p_disp_caller` - A boolean indicating whether to display the caller for each log entry.
     ///
     /// # Returns
     ///
@@ -263,9 +258,9 @@ impl RustLogConfig {
     /// # Panicking
     ///
     /// This function will never panic.
-    pub fn display_caller(&mut self, disp_caller: bool) -> &mut RustLogConfig {
+    pub fn display_caller(&mut self, p_disp_caller: bool) -> &mut RustLogConfig {
         if !is_log_configured() {
-            self.display_caller = disp_caller;
+            self.display_caller = p_disp_caller;
         }
         self
     }
@@ -274,8 +269,8 @@ impl RustLogConfig {
     ///
     /// # Parameters
     ///
-    /// * `disp_severity` - `None` to disable severity display. `Some` to enable severity display, with
-    ///    minimal displayed level given in variant.
+    /// * `p_disp_severity` - `None` to disable severity display. `Some` to enable severity display, with
+    ///   minimal displayed level given in variant.
     ///
     /// # Returns
     ///
@@ -288,9 +283,9 @@ impl RustLogConfig {
     /// # Panicking
     ///
     /// This function will never panic.
-    pub fn display_severity(&mut self, disp_severity: Option<LogSeverity>) -> &mut RustLogConfig {
+    pub fn display_severity(&mut self, p_disp_severity: Option<LogSeverity>) -> &mut RustLogConfig {
         if !is_log_configured() {
-            self.display_severity = disp_severity;
+            self.display_severity = p_disp_severity;
         }
         self
     }
@@ -325,9 +320,7 @@ impl RustLogConfig {
             Err(String::from("Logging already configured"))
         } else {
             // Save configuration
-            unsafe {
-                LOG_CONFIG = Some(*self);
-            }
+            *G_LOG_CONFIG.lock().unwrap() = Some(*self);
 
             // At least one log destination must be selected
             if !self.log_to_terminal && self.log_to_file.is_none() {
@@ -335,39 +328,47 @@ impl RustLogConfig {
             }
 
             // Create log file
-            if let Some(log_file) = self.log_to_file {
+            if let Some(l_log_file) = self.log_to_file {
                 match File::options()
                     .create(true)
                     .write(true)
                     .append(self.append_to_file)
-                    .open(log_file)
+                    .open(l_log_file)
                 {
-                    Ok(f) => {
-                        unsafe {
-                            LOG_FILE = Some(f);
-                        };
-                        let date = format!("{}", Local::now().format("%Y-%m-%d %H:%M:%S"));
+                    Ok(l_f) => {
+                        *G_LOG_FILE.lock().unwrap() = Some(l_f);
+
+                        let l_date = format!("{}", Local::now().format("%Y-%m-%d %H:%M:%S"));
 
                         // Check if file is empty
-                        match fs::read_to_string(log_file) {
-                            Ok(s) => {
-                                if !s.is_empty() && self.append_to_file {
-                                    get_log_file().unwrap().write_all("\n".as_bytes()).unwrap();
+                        match fs::read_to_string(l_log_file) {
+                            Ok(l_s) => {
+                                if !l_s.is_empty() && self.append_to_file {
+                                    G_LOG_FILE
+                                        .lock()
+                                        .unwrap()
+                                        .as_mut()
+                                        .unwrap()
+                                        .write_all("\n".as_bytes())
+                                        .unwrap();
                                 }
                             }
-                            Err(e) => return Err(format!("{e}")),
+                            Err(l_e) => return Err(format!("{l_e}")),
                         };
 
                         // Write date on 1st line
-                        match get_log_file()
+                        match G_LOG_FILE
+                            .lock()
                             .unwrap()
-                            .write_all(format!("Log start on {date}\n").as_bytes())
+                            .as_mut()
+                            .unwrap()
+                            .write_all(format!("Log start on {l_date}\n").as_bytes())
                         {
                             Ok(_) => (),
-                            Err(e) => return Err(format!("{e}")),
+                            Err(l_e) => return Err(format!("{l_e}")),
                         }
                     }
-                    Err(e) => return Err(format!("{e}")),
+                    Err(l_e) => return Err(format!("{l_e}")),
                 };
             }
 
@@ -379,28 +380,32 @@ impl RustLogConfig {
 #[cfg(test)]
 mod tests {
     use crate::{
-        data::{get_log_config, get_log_file},
+        data::{G_LOG_CONFIG, G_LOG_FILE},
         RustLogConfig,
     };
     use rusttests::{check_result, check_value, CheckType};
     use serial_test::serial;
     use std::fs::remove_file;
 
+    fn force_clear_config() {
+        *G_LOG_CONFIG.lock().unwrap() = None;
+        *G_LOG_FILE.lock().unwrap() = None;
+    }
+
     #[test]
     #[serial]
     fn log_already_configured() -> Result<(), String> {
+        force_clear_config();
         // Set config to Some
-        unsafe {
-            crate::data::LOG_CONFIG = Some(RustLogConfig {
-                log_to_terminal: true,
-                log_to_file: None,
-                append_to_file: false,
-                display_date: false,
-                display_caller: false,
-                locked: false,
-                display_severity: Some(crate::LogSeverity::Info),
-            });
-        }
+        *G_LOG_CONFIG.lock().unwrap() = Some(RustLogConfig {
+            log_to_terminal: true,
+            log_to_file: None,
+            append_to_file: false,
+            display_date: false,
+            display_caller: false,
+            locked: false,
+            display_severity: Some(crate::LogSeverity::Info),
+        });
 
         check_result((1, 1), RustLogConfig::new_config().configure(), false)?;
 
@@ -411,15 +416,14 @@ mod tests {
     #[serial]
     fn log_already_configured_with_new_config() -> Result<(), String> {
         // Set config to None
-        unsafe { crate::data::LOG_CONFIG = None }
-        unsafe { crate::data::LOG_FILE = None }
+        force_clear_config();
 
-        let mut config = RustLogConfig::new_config();
-        config.enable_terminal();
-        config.configure()?;
-        config.disable_terminal();
+        let mut l_config = RustLogConfig::new_config();
+        l_config.enable_terminal();
+        l_config.configure()?;
+        l_config.disable_terminal();
 
-        check_value((1, 1), &config.log_to_terminal, &true, CheckType::Equal)?;
+        check_value((1, 1), &l_config.log_to_terminal, &true, CheckType::Equal)?;
 
         Ok(())
     }
@@ -428,19 +432,18 @@ mod tests {
     #[serial]
     fn log_not_configured_terminal() -> Result<(), String> {
         // Set config to None
-        unsafe { crate::data::LOG_CONFIG = None }
-        unsafe { crate::data::LOG_FILE = None }
+        force_clear_config();
 
         // Function shall return Ok
         // log file shall be None
         // Log options shall be Some
         RustLogConfig::new_config().enable_terminal().configure()?;
 
-        if get_log_file().is_some() {
+        if G_LOG_FILE.lock().unwrap().is_some() {
             return Err("LOG_FILE should be None".to_string());
         };
 
-        match get_log_config() {
+        match crate::data::get_log_config() {
             Some(_) => Ok(()),
             None => Err("LOG_OPTIONS should be Some".to_string()),
         }
@@ -450,12 +453,7 @@ mod tests {
     #[serial]
     fn log_not_configured_file() -> Result<(), String> {
         // Set config to None
-        unsafe {
-            crate::data::LOG_CONFIG = None;
-        }
-        unsafe {
-            crate::data::LOG_FILE = None;
-        }
+        force_clear_config();
 
         remove_file("log.txt").unwrap_or(());
 
@@ -469,11 +467,11 @@ mod tests {
 
         remove_file("log.txt").unwrap_or(());
 
-        match get_log_file() {
+        match G_LOG_FILE.lock().unwrap().as_ref() {
             Some(_) => (),
             None => return Err("LOG_FILE should be Some".to_string()),
         };
-        match get_log_config() {
+        match crate::data::get_log_config() {
             Some(_) => Ok(()),
             None => Err("LOG_OPTIONS should be Some".to_string()),
         }
@@ -483,12 +481,7 @@ mod tests {
     #[serial]
     fn log_not_configured_both() -> Result<(), String> {
         // Set config to None
-        unsafe {
-            crate::data::LOG_CONFIG = None;
-        }
-        unsafe {
-            crate::data::LOG_FILE = None;
-        }
+        force_clear_config();
 
         remove_file("log.txt").unwrap_or(());
 
@@ -502,12 +495,12 @@ mod tests {
 
         remove_file("log.txt").unwrap_or(());
 
-        match get_log_file() {
+        match G_LOG_FILE.lock().unwrap().as_ref() {
             Some(_) => (),
             None => return Err("LOG_FILE should be Some".to_string()),
         };
 
-        match get_log_config() {
+        match crate::data::get_log_config() {
             Some(_) => Ok(()),
             None => Err("LOG_OPTIONS should be Some".to_string()),
         }
@@ -517,22 +510,17 @@ mod tests {
     #[serial]
     fn log_not_configured_all_disabled() -> Result<(), String> {
         // Set config to None
-        unsafe {
-            crate::data::LOG_CONFIG = None;
-        }
-        unsafe {
-            crate::data::LOG_FILE = None;
-        }
+        force_clear_config();
 
         remove_file("log.txt").unwrap_or(());
 
         // Function shall return Err
         // log file shall be None
         // Log options shall be None
-        let result = RustLogConfig::new_config().configure();
+        let l_result = RustLogConfig::new_config().configure();
         remove_file("log.txt").unwrap_or(());
 
-        match result {
+        match l_result {
             Ok(_) => Err("configure_log should return Err variant".to_string()),
             Err(_) => Ok(()),
         }
@@ -541,14 +529,11 @@ mod tests {
     #[test]
     #[serial]
     fn enable_terminal() -> Result<(), String> {
-        unsafe {
-            crate::data::LOG_CONFIG = None;
-            crate::data::LOG_FILE = None;
-        }
-        let mut binding = RustLogConfig::new_config();
-        let config = binding.enable_terminal();
+        force_clear_config();
+        let mut l_binding = RustLogConfig::new_config();
+        let l_config = l_binding.enable_terminal();
 
-        match config.log_to_terminal {
+        match l_config.log_to_terminal {
             true => Ok(()),
             false => Err("log_to_terminal should be TRUE".to_string()),
         }
@@ -557,15 +542,12 @@ mod tests {
     #[test]
     #[serial]
     fn enable_file() -> Result<(), String> {
-        unsafe {
-            crate::data::LOG_CONFIG = None;
-            crate::data::LOG_FILE = None;
-        }
-        let mut binding = RustLogConfig::new_config();
-        let config = binding.enable_file("log.txt", true);
+        force_clear_config();
+        let mut l_binding = RustLogConfig::new_config();
+        let l_config = l_binding.enable_file("log.txt", true);
 
-        match config.log_to_file {
-            Some(_) => match config.append_to_file {
+        match l_config.log_to_file {
+            Some(_) => match l_config.append_to_file {
                 true => Ok(()),
                 false => Err("append_to_file should be TRUE".to_string()),
             },
@@ -577,12 +559,7 @@ mod tests {
     #[serial]
     fn clear_config_unlocked() -> Result<(), String> {
         // Set config to None
-        unsafe {
-            crate::data::LOG_CONFIG = None;
-        }
-        unsafe {
-            crate::data::LOG_FILE = None;
-        }
+        force_clear_config();
 
         // New config unlocked by default
         RustLogConfig::new_config().enable_terminal().configure()?;
@@ -590,7 +567,7 @@ mod tests {
         // Try to clear config
         RustLogConfig::clear_config();
 
-        match get_log_config() {
+        match crate::data::get_log_config() {
             Some(_) => Err("Configuration should be cleared".to_string()),
             None => Ok(()),
         }
@@ -600,12 +577,7 @@ mod tests {
     #[serial]
     fn clear_config_locked() -> Result<(), String> {
         // Set config to None
-        unsafe {
-            crate::data::LOG_CONFIG = None;
-        }
-        unsafe {
-            crate::data::LOG_FILE = None;
-        }
+        force_clear_config();
 
         // New locked config
         RustLogConfig::new_config()
@@ -616,7 +588,7 @@ mod tests {
         // Try to clear config
         RustLogConfig::clear_config();
 
-        match get_log_config() {
+        match crate::data::get_log_config() {
             Some(_) => Ok(()),
             None => Err("Configuration should be locked".to_string()),
         }

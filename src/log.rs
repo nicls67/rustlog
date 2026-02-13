@@ -2,25 +2,24 @@
 //! Logging module for `rustlog` crate
 //!
 
-extern crate chrono;
 use std::io::Write;
 
 use chrono::Local;
 
 use crate::{
-    data::{get_log_config, get_log_file},
+    data::{get_log_config, G_LOG_FILE},
     LogSeverity, RustLogConfig,
 };
 
-/// Writes the given `text` to log.
+/// Writes the given `p_text` to log.
 ///
 /// Severity, caller name, and date will be added in the format _DATE-SEVERITY-CALLER-TEXT_.
 ///
 /// # Arguments
 ///
-/// * `severity` - The severity level of the log (Verbose, Info, Warning, Error).
-/// * `text` - The log message to be written.
-/// * `caller` - The name of the function or module that is writing the log.
+/// * `p_severity` - The severity level of the log (Verbose, Info, Warning, Error).
+/// * `p_text` - The log message to be written.
+/// * `p_caller` - The name of the function or module that is writing the log.
 ///
 /// # Returns
 ///
@@ -33,34 +32,34 @@ use crate::{
 /// # Panicking
 ///
 /// This function will never panic.
-pub fn write_log(severity: LogSeverity, text: &String, caller: &String) {
+pub fn write_log(p_severity: LogSeverity, p_text: &str, p_caller: &str) {
     // Get config, if config is None, do nothing
-    if let Some(config) = get_log_config() {
-        let mut disp_severity = true;
+    if let Some(l_config) = get_log_config() {
+        let mut l_disp_severity = true;
 
-        if let Some(min_severity) = config.display_severity {
+        if let Some(l_min_severity) = l_config.display_severity {
             // Check if message should be logged according to severity
-            disp_severity = match min_severity {
+            l_disp_severity = match l_min_severity {
                 LogSeverity::Verbose => true,
-                LogSeverity::Info => severity != LogSeverity::Verbose,
+                LogSeverity::Info => p_severity != LogSeverity::Verbose,
                 LogSeverity::Warning => {
-                    matches!(severity, LogSeverity::Error | LogSeverity::Warning)
+                    matches!(p_severity, LogSeverity::Error | LogSeverity::Warning)
                 }
-                LogSeverity::Error => severity == LogSeverity::Error,
+                LogSeverity::Error => p_severity == LogSeverity::Error,
             };
         }
 
         // Log message
-        if disp_severity {
-            let date = format!("{} - ", Local::now().format("%Y-%m-%d %H:%M:%S"));
-            let log = generate_log(severity, text, caller, date, config);
+        if l_disp_severity {
+            let l_date = format!("{} - ", Local::now().format("%Y-%m-%d %H:%M:%S"));
+            let l_log = generate_log(p_severity, p_text, p_caller, l_date, &l_config);
 
-            if config.log_to_terminal {
-                println!("{log}");
+            if l_config.log_to_terminal {
+                println!("{l_log}");
             }
-            if config.log_to_file.is_some() {
-                if let Some(f) = get_log_file().as_mut() {
-                    f.write_all(format!("{log}\n").as_bytes()).unwrap_or(());
+            if l_config.log_to_file.is_some() {
+                if let Some(l_f) = G_LOG_FILE.lock().unwrap().as_mut() {
+                    l_f.write_all(format!("{l_log}\n").as_bytes()).unwrap_or(());
                 }
             }
         }
@@ -74,11 +73,11 @@ pub fn write_log(severity: LogSeverity, text: &String, caller: &String) {
 ///
 /// # Arguments
 ///
-/// * `severity` - The severity level of the log (Verbose, Info, Warning, Error).
-/// * `text` - The log message to be written.
-/// * `caller` - The name of the function or module that is writing the log.
-/// * `date` - The current date and time as a string.
-/// * `config` - A reference to the configuration settings for the logger.
+/// * `p_severity` - The severity level of the log (Verbose, Info, Warning, Error).
+/// * `p_text` - The log message to be written.
+/// * `p_caller` - The name of the function or module that is writing the log.
+/// * `p_date` - The current date and time as a string.
+/// * `p_config` - A reference to the configuration settings for the logger.
 ///
 /// # Returns
 ///
@@ -92,30 +91,30 @@ pub fn write_log(severity: LogSeverity, text: &String, caller: &String) {
 ///
 /// This function will never panic.
 fn generate_log(
-    severity: LogSeverity,
-    text: &String,
-    caller: &String,
-    date: String,
-    config: &RustLogConfig,
+    p_severity: LogSeverity,
+    p_text: &str,
+    p_caller: &str,
+    p_date: String,
+    p_config: &RustLogConfig,
 ) -> String {
-    let mut output = String::new();
-    if config.display_date {
-        output = output + &date + " - ";
+    let mut l_output = String::new();
+    if p_config.display_date {
+        l_output = l_output + &p_date + " - ";
     }
-    if config.display_severity.is_some() {
-        let sev_str = match severity {
+    if p_config.display_severity.is_some() {
+        let l_sev_str = match p_severity {
             LogSeverity::Verbose => "VERB",
             LogSeverity::Info => "INFO",
             LogSeverity::Warning => "WARNING",
             LogSeverity::Error => "ERROR",
         };
-        output = output + sev_str + " - ";
+        l_output = l_output + l_sev_str + " - ";
     }
-    if config.display_caller {
-        output = output + caller + " - ";
+    if p_config.display_caller {
+        l_output = l_output + p_caller + " - ";
     }
-    output += text;
-    output
+    l_output += p_text;
+    l_output
 }
 
 #[cfg(test)]
@@ -126,10 +125,10 @@ mod tests {
 
     #[test]
     fn formatting_1() -> Result<(), String> {
-        let text = "Hello".to_string();
-        let caller = "Me".to_string();
-        let date = "2024-01-01 12:15:32".to_string();
-        let config = RustLogConfig {
+        let l_text = "Hello";
+        let l_caller = "Me";
+        let l_date = "2024-01-01 12:15:32".to_string();
+        let l_config = RustLogConfig {
             log_to_terminal: true,
             log_to_file: None,
             append_to_file: false,
@@ -139,7 +138,7 @@ mod tests {
             display_severity: None,
         };
 
-        match generate_log(LogSeverity::Info, &text, &caller, date, &config).as_str() {
+        match generate_log(LogSeverity::Info, l_text, l_caller, l_date, &l_config).as_str() {
             "Hello" => Ok(()),
             s => Err(format!("Wrong log string received : {s}")),
         }
@@ -147,10 +146,10 @@ mod tests {
 
     #[test]
     fn formatting_2() -> Result<(), String> {
-        let text = "Hello".to_string();
-        let caller = "Me".to_string();
-        let date = "2024-01-01 12:15:32".to_string();
-        let config = RustLogConfig {
+        let l_text = "Hello";
+        let l_caller = "Me";
+        let l_date = "2024-01-01 12:15:32".to_string();
+        let l_config = RustLogConfig {
             log_to_terminal: true,
             log_to_file: None,
             append_to_file: false,
@@ -160,7 +159,7 @@ mod tests {
             display_severity: None,
         };
 
-        match generate_log(LogSeverity::Error, &text, &caller, date, &config).as_str() {
+        match generate_log(LogSeverity::Error, l_text, l_caller, l_date, &l_config).as_str() {
             "Me - Hello" => Ok(()),
             s => Err(format!("Wrong log string received : {s}")),
         }
@@ -168,10 +167,10 @@ mod tests {
 
     #[test]
     fn formatting_3() -> Result<(), String> {
-        let text = "Hello".to_string();
-        let caller = "Me".to_string();
-        let date = "2024-01-01 12:15:32".to_string();
-        let config = RustLogConfig {
+        let l_text = "Hello";
+        let l_caller = "Me";
+        let l_date = "2024-01-01 12:15:32".to_string();
+        let l_config = RustLogConfig {
             log_to_terminal: true,
             log_to_file: None,
             append_to_file: false,
@@ -181,7 +180,7 @@ mod tests {
             display_severity: Some(LogSeverity::Info),
         };
 
-        match generate_log(LogSeverity::Info, &text, &caller, date, &config).as_str() {
+        match generate_log(LogSeverity::Info, l_text, l_caller, l_date, &l_config).as_str() {
             "2024-01-01 12:15:32 - INFO - Me - Hello" => Ok(()),
             s => Err(format!("Wrong log string received : {s}")),
         }
@@ -189,10 +188,10 @@ mod tests {
 
     #[test]
     fn formatting_4() -> Result<(), String> {
-        let text = "Hello".to_string();
-        let caller = "Me".to_string();
-        let date = "2024-01-01 12:15:32".to_string();
-        let config = RustLogConfig {
+        let l_text = "Hello";
+        let l_caller = "Me";
+        let l_date = "2024-01-01 12:15:32".to_string();
+        let l_config = RustLogConfig {
             log_to_terminal: true,
             log_to_file: None,
             append_to_file: false,
@@ -202,7 +201,7 @@ mod tests {
             display_severity: Some(LogSeverity::Warning),
         };
 
-        match generate_log(LogSeverity::Info, &text, &caller, date, &config).as_str() {
+        match generate_log(LogSeverity::Info, l_text, l_caller, l_date, &l_config).as_str() {
             "2024-01-01 12:15:32 - INFO - Me - Hello" => Ok(()),
             s => Err(format!("Wrong log string received : {s}")),
         }

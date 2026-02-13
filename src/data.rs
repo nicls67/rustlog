@@ -1,49 +1,45 @@
 use std::fs::File;
+use std::sync::Mutex;
 
 use crate::log_config::RustLogConfig;
 
-pub static mut LOG_CONFIG: Option<RustLogConfig> = None;
-pub static mut LOG_FILE: Option<File> = None;
+pub static G_LOG_CONFIG: Mutex<Option<RustLogConfig>> = Mutex::new(None);
+pub static G_LOG_FILE: Mutex<Option<File>> = Mutex::new(None);
 
-/// Returns log configuration with `unsafe` wrapping.
+/// Returns log configuration.
 ///
-/// # Safety
-///
-/// This function performs an unsafe operation by dereferencing a raw pointer.
+/// This function retrieves the current log configuration from the global state.
 ///
 /// # Returns
 ///
-/// An `Option` containing a reference to a `RustLogConfig` if the global `LOG_CONFIG` is set, or `None` if it is not.
-pub fn get_log_config() -> Option<&'static RustLogConfig> {
-    unsafe { LOG_CONFIG.as_ref() }
+/// An `Option` containing a `RustLogConfig` if the global `G_LOG_CONFIG` is set, or `None` if it is not.
+///
+/// # Error handling
+///
+/// This function does not return any error.
+///
+/// # Panicking
+///
+/// This function will never panic.
+pub fn get_log_config() -> Option<RustLogConfig> {
+    *G_LOG_CONFIG.lock().unwrap()
 }
 
 /// Checks if the global log configuration is set.
 ///
-/// # Safety
-///
-/// This function performs an unsafe operation by dereferencing a raw pointer.
-/// Make sure the global `LOG_CONFIG` has been properly initialized before
-/// calling this function to avoid undefined behavior.
+/// This function checks if the global log configuration has been initialized.
 ///
 /// # Returns
 ///
 /// `true` if the global log configuration is set, `false` otherwise.
+///
+/// # Error handling
+///
+/// This function does not return any error.
+///
+/// # Panicking
+///
+/// This function will never panic.
 pub fn is_log_configured() -> bool {
-    unsafe { LOG_CONFIG }.is_some()
-}
-
-/// Returns a reference to the global log file if it is set.
-///
-/// # Safety
-///
-/// This function performs an unsafe operation by dereferencing a raw pointer.
-/// Make sure the global `LOG_FILE` has been properly initialized before calling
-/// this function to avoid undefined behavior.
-///
-/// # Returns
-///
-/// An `Option` containing a reference to a `File` if the global `LOG_FILE` is set, or `None` if it is not.
-pub fn get_log_file() -> Option<&'static File> {
-    unsafe { LOG_FILE.as_ref() }
+    G_LOG_CONFIG.lock().unwrap().is_some()
 }
