@@ -1,6 +1,6 @@
 [package]
 name = "rustlog"
-version = "1.1.0"
+version = "1.2.0"
 edition = "2021"
 authors = ["Nicolas SIMON"]
 description = "A logging library for Rust projects"
@@ -9,8 +9,8 @@ description = "A logging library for Rust projects"
 
 [dependencies]
 chrono = "0.4.37"
-package_infos = { git = "https://github.com/nicls67/package_infos.git", tag = "0.1.0" }
+package_infos = { git = "https://github.com/nicls67/package_infos.git", tag = "0.1.1" }
 
 [dev-dependencies]
-rusttests = { git = "https://github.com/nicls67/rusttests.git", tag = "1.1.0" }
+rusttests = { git = "https://github.com/nicls67/rusttests.git", tag = "1.1.1" }
 serial_test = "3.3.1"

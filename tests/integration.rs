@@ -42,22 +42,18 @@ fn write_1() -> Result<(), String> {
         .display_caller(true)
         .configure()?;
 
-    write_log(
-        rustlog::LogSeverity::Info,
-        &"Hello world !".to_string(),
-        &"MyModule".to_string(),
-    );
+    write_log(rustlog::LogSeverity::Info, "Hello world !", "MyModule");
 
     // Get log file content
-    let logfile = fs::read_to_string("log1.txt").unwrap();
+    let l_logfile = fs::read_to_string("log1.txt").unwrap();
     remove_file("log1.txt").unwrap_or(());
 
     // Compare content
-    let mut lines: Vec<&str> = logfile.split("\n").collect();
+    let mut l_lines: Vec<&str> = l_logfile.split('\n').collect();
 
     // Skip last line
-    lines.pop().unwrap();
-    match lines.pop().unwrap() {
+    l_lines.pop().unwrap();
+    match l_lines.pop().unwrap() {
         "INFO - MyModule - Hello world !" => Ok(()),
         s => Err(format!("Wrong log file content : {s}")),
     }
@@ -77,30 +73,26 @@ fn write_2() -> Result<(), String> {
         .display_caller(false)
         .configure()?;
 
-    write_log(
-        rustlog::LogSeverity::Error,
-        &"Hello world !".to_string(),
-        &"MyModule".to_string(),
-    );
+    write_log(rustlog::LogSeverity::Error, "Hello world !", "MyModule");
 
     // Get log file content
-    let logfile = fs::read_to_string("log2.txt").unwrap();
+    let l_logfile = fs::read_to_string("log2.txt").unwrap();
     remove_file("log2.txt").unwrap_or(());
 
     // Compare content
-    let mut lines: Vec<&str> = logfile.split("\n").collect();
+    let mut l_lines: Vec<&str> = l_logfile.split('\n').collect();
 
     // Skip last line
-    lines.pop().unwrap();
+    l_lines.pop().unwrap();
 
-    match lines.pop().unwrap() {
+    match l_lines.pop().unwrap() {
         "ERROR - Hello world !" => (),
         s => return Err(format!("Wrong log file content on line 3 : {s}")),
     };
     // Skip 2nd line
-    lines.pop().unwrap();
+    l_lines.pop().unwrap();
 
-    match lines.pop().unwrap() {
+    match l_lines.pop().unwrap() {
         "Dummy logging 2" => Ok(()),
         s => Err(format!("Wrong log file content on line 1 : {s}")),
     }
@@ -121,30 +113,26 @@ fn write_3() -> Result<(), String> {
         .display_severity(None)
         .configure()?;
 
-    write_log(
-        rustlog::LogSeverity::Error,
-        &"Hello world !".to_string(),
-        &"MyModule".to_string(),
-    );
+    write_log(rustlog::LogSeverity::Error, "Hello world !", "MyModule");
 
     // Get log file content
-    let logfile = fs::read_to_string("log3.txt").unwrap();
+    let l_logfile = fs::read_to_string("log3.txt").unwrap();
     remove_file("log3.txt").unwrap_or(());
 
     // Compare content
-    let mut lines: Vec<&str> = logfile.split("\n").collect();
+    let mut l_lines: Vec<&str> = l_logfile.split('\n').collect();
 
     // Skip last line
-    lines.pop().unwrap();
+    l_lines.pop().unwrap();
 
-    match lines.pop().unwrap() {
+    match l_lines.pop().unwrap() {
         "Hello world !" => (),
         s => return Err(format!("Wrong log file content on line 3 : {s}")),
     };
     // Skip 2nd line
-    lines.pop().unwrap();
+    l_lines.pop().unwrap();
 
-    match lines.pop().unwrap() {
+    match l_lines.pop().unwrap() {
         "Dummy logging 3" => Ok(()),
         s => Err(format!("Wrong log file content on line 1 : {s}")),
     }
@@ -165,35 +153,31 @@ fn write_4() -> Result<(), String> {
         .display_severity(Some(rustlog::LogSeverity::Warning))
         .configure()?;
 
-    write_log(
-        rustlog::LogSeverity::Info,
-        &"Hello world !".to_string(),
-        &"MyModule".to_string(),
-    );
+    write_log(rustlog::LogSeverity::Info, "Hello world !", "MyModule");
     write_log(
         rustlog::LogSeverity::Error,
-        &"Very bad mistake !".to_string(),
-        &"MyModule".to_string(),
+        "Very bad mistake !",
+        "MyModule",
     );
 
     // Get log file content
-    let logfile = fs::read_to_string("log4.txt").unwrap();
+    let l_logfile = fs::read_to_string("log4.txt").unwrap();
     remove_file("log4.txt").unwrap_or(());
 
     // Compare content
-    let mut lines: Vec<&str> = logfile.split("\n").collect();
+    let mut l_lines: Vec<&str> = l_logfile.split('\n').collect();
 
     // Skip last line
-    lines.pop().unwrap();
+    l_lines.pop().unwrap();
 
-    match lines.pop().unwrap() {
+    match l_lines.pop().unwrap() {
         "ERROR - Very bad mistake !" => (),
         s => return Err(format!("Wrong log file content on line 3 : {s}")),
     };
     // Skip 2nd line
-    lines.pop().unwrap();
+    l_lines.pop().unwrap();
 
-    match lines.pop().unwrap() {
+    match l_lines.pop().unwrap() {
         "Dummy logging 4" => Ok(()),
         s => Err(format!("Wrong log file content on line 1 : {s}")),
     }
