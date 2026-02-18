@@ -37,8 +37,8 @@ This rule applies each time a git branch needs to be created or renamed
 ### Instructions
 1. Never ask for a branch name, define it by yourself
 2. Analyse the task :
-  - In case of a new feature : /feat/task-name
-  - In case of bug fix : /fix/task-name
+  - In case of a new feature : feat/task-name
+  - In case of bug fix : fix/task-name
 3. Always lower case
 4. When the pull request is linked to a Github issue, add 'Closes #ID' to the pull request message.
 

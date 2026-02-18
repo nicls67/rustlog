@@ -2,12 +2,10 @@
 //! Logging module for `rustlog` crate
 //!
 
-use std::io::Write;
-
 use chrono::Local;
 
 use crate::{
-    data::{get_log_config, G_LOG_FILE},
+    data::{get_log_config, write_to_log_file},
     LogSeverity, RustLogConfig,
 };
 
@@ -39,28 +37,19 @@ pub fn write_log(p_severity: LogSeverity, p_text: &str, p_caller: &str) {
 
         if let Some(l_min_severity) = l_config.display_severity {
             // Check if message should be logged according to severity
-            l_disp_severity = match l_min_severity {
-                LogSeverity::Verbose => true,
-                LogSeverity::Info => p_severity != LogSeverity::Verbose,
-                LogSeverity::Warning => {
-                    matches!(p_severity, LogSeverity::Error | LogSeverity::Warning)
-                }
-                LogSeverity::Error => p_severity == LogSeverity::Error,
-            };
+            l_disp_severity = p_severity >= l_min_severity;
         }
 
         // Log message
         if l_disp_severity {
-            let l_date = format!("{} - ", Local::now().format("%Y-%m-%d %H:%M:%S"));
+            let l_date = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
             let l_log = generate_log(p_severity, p_text, p_caller, l_date, &l_config);
 
             if l_config.log_to_terminal {
                 println!("{l_log}");
             }
             if l_config.log_to_file.is_some() {
-                if let Some(l_f) = G_LOG_FILE.lock().unwrap().as_mut() {
-                    l_f.write_all(format!("{l_log}\n").as_bytes()).unwrap_or(());
-                }
+                let _ = write_to_log_file(format!("{l_log}\n").as_bytes());
             }
         }
     }
@@ -102,13 +91,7 @@ fn generate_log(
         l_output = l_output + &p_date + " - ";
     }
     if p_config.display_severity.is_some() {
-        let l_sev_str = match p_severity {
-            LogSeverity::Verbose => "VERB",
-            LogSeverity::Info => "INFO",
-            LogSeverity::Warning => "WARNING",
-            LogSeverity::Error => "ERROR",
-        };
-        l_output = l_output + l_sev_str + " - ";
+        l_output = l_output + &p_severity.to_string() + " - ";
     }
     if p_config.display_caller {
         l_output = l_output + p_caller + " - ";

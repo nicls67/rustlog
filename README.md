@@ -8,7 +8,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rustlog = "1.1.1"
+rustlog = "1.2.0"
 ```
 
 ## How it works ?
