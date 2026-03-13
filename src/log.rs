@@ -43,13 +43,14 @@ pub fn write_log(p_severity: LogSeverity, p_text: &str, p_caller: &str) {
         // Log message
         if l_disp_severity {
             let l_date = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
-            let l_log = generate_log(p_severity, p_text, p_caller, l_date, &l_config);
+            let mut l_log = generate_log(p_severity, p_text, p_caller, l_date, &l_config);
 
             if l_config.log_to_terminal {
                 println!("{l_log}");
             }
             if l_config.log_to_file.is_some() {
-                let _ = write_to_log_file(format!("{l_log}\n").as_bytes());
+                l_log.push('\n');
+                let _ = write_to_log_file(l_log.as_bytes());
             }
         }
     }
