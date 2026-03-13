@@ -170,3 +170,21 @@ pub fn clear_log_config_and_file() {
     *G_LOG_CONFIG.lock().unwrap_or_else(|l_e| l_e.into_inner()) = None;
     *G_LOG_FILE.lock().unwrap_or_else(|l_e| l_e.into_inner()) = None;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rusttests::{check_value, CheckType};
+
+    #[test]
+    fn test_write_to_log_file_none() -> Result<(), String> {
+        clear_log_config_and_file();
+        check_value(
+            (1, 1),
+            &write_to_log_file(b"test"),
+            &Ok(()),
+            CheckType::Equal,
+        )?;
+        Ok(())
+    }
+}

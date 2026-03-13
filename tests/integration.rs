@@ -5,6 +5,7 @@
 use std::fs::{self, remove_file};
 
 use rustlog::{write_log, RustLogConfig};
+use rusttests::{check_result, check_value, CheckType};
 use serial_test::serial;
 
 #[test]
@@ -13,19 +14,22 @@ fn log_configuration() -> Result<(), String> {
     RustLogConfig::clear_config();
 
     // First call of config, shall return OK
-    match RustLogConfig::new_config().enable_terminal().configure() {
-        Ok(_) => (),
-        Err(_) => return Err("First call of configure_log should return Ok".to_string()),
-    };
+    check_result(
+        (1, 1),
+        RustLogConfig::new_config().enable_terminal().configure(),
+        true,
+    )?;
 
     // Second call of config, shall return Err
-    match RustLogConfig::new_config()
-        .enable_file("log.txt", true)
-        .configure()
-    {
-        Ok(_) => Err("Second call of configure_log should return Err".to_string()),
-        Err(_) => Ok(()),
-    }
+    check_result(
+        (2, 1),
+        RustLogConfig::new_config()
+            .enable_file("log.txt", true)
+            .configure(),
+        false,
+    )?;
+
+    Ok(())
 }
 
 #[test]
@@ -53,10 +57,15 @@ fn write_1() -> Result<(), String> {
 
     // Skip last line
     l_lines.pop().unwrap();
-    match l_lines.pop().unwrap() {
-        "INFO - MyModule - Hello world !" => Ok(()),
-        s => Err(format!("Wrong log file content : {s}")),
-    }
+
+    check_value(
+        (1, 1),
+        &l_lines.pop().unwrap().to_string(),
+        &"INFO - MyModule - Hello world !".to_string(),
+        CheckType::Equal,
+    )?;
+
+    Ok(())
 }
 
 #[test]
@@ -85,17 +94,24 @@ fn write_2() -> Result<(), String> {
     // Skip last line
     l_lines.pop().unwrap();
 
-    match l_lines.pop().unwrap() {
-        "ERROR - Hello world !" => (),
-        s => return Err(format!("Wrong log file content on line 3 : {s}")),
-    };
+    check_value(
+        (1, 1),
+        &l_lines.pop().unwrap().to_string(),
+        &"ERROR - Hello world !".to_string(),
+        CheckType::Equal,
+    )?;
+
     // Skip 2nd line
     l_lines.pop().unwrap();
 
-    match l_lines.pop().unwrap() {
-        "Dummy logging 2" => Ok(()),
-        s => Err(format!("Wrong log file content on line 1 : {s}")),
-    }
+    check_value(
+        (2, 1),
+        &l_lines.pop().unwrap().to_string(),
+        &"Dummy logging 2".to_string(),
+        CheckType::Equal,
+    )?;
+
+    Ok(())
 }
 
 #[test]
@@ -125,17 +141,23 @@ fn write_3() -> Result<(), String> {
     // Skip last line
     l_lines.pop().unwrap();
 
-    match l_lines.pop().unwrap() {
-        "Hello world !" => (),
-        s => return Err(format!("Wrong log file content on line 3 : {s}")),
-    };
+    check_value(
+        (1, 1),
+        &l_lines.pop().unwrap().to_string(),
+        &"Hello world !".to_string(),
+        CheckType::Equal,
+    )?;
     // Skip 2nd line
     l_lines.pop().unwrap();
 
-    match l_lines.pop().unwrap() {
-        "Dummy logging 3" => Ok(()),
-        s => Err(format!("Wrong log file content on line 1 : {s}")),
-    }
+    check_value(
+        (2, 1),
+        &l_lines.pop().unwrap().to_string(),
+        &"Dummy logging 3".to_string(),
+        CheckType::Equal,
+    )?;
+
+    Ok(())
 }
 
 #[test]
@@ -170,15 +192,21 @@ fn write_4() -> Result<(), String> {
     // Skip last line
     l_lines.pop().unwrap();
 
-    match l_lines.pop().unwrap() {
-        "ERROR - Very bad mistake !" => (),
-        s => return Err(format!("Wrong log file content on line 3 : {s}")),
-    };
+    check_value(
+        (1, 1),
+        &l_lines.pop().unwrap().to_string(),
+        &"ERROR - Very bad mistake !".to_string(),
+        CheckType::Equal,
+    )?;
     // Skip 2nd line
     l_lines.pop().unwrap();
 
-    match l_lines.pop().unwrap() {
-        "Dummy logging 4" => Ok(()),
-        s => Err(format!("Wrong log file content on line 1 : {s}")),
-    }
+    check_value(
+        (2, 1),
+        &l_lines.pop().unwrap().to_string(),
+        &"Dummy logging 4".to_string(),
+        CheckType::Equal,
+    )?;
+
+    Ok(())
 }

@@ -563,6 +563,41 @@ mod tests {
 
     #[test]
     #[serial]
+    fn test_config_builder() -> Result<(), String> {
+        force_clear_config();
+
+        let mut l_config = RustLogConfig::new_config();
+        l_config.enable_file("log.txt", true);
+        l_config.disable_file();
+        check_value(
+            (1, 1),
+            &l_config.log_to_file.is_none(),
+            &true,
+            CheckType::Equal,
+        )?;
+
+        l_config.display_date(true);
+        check_value((2, 1), &l_config.display_date, &true, CheckType::Equal)?;
+
+        l_config.display_caller(true);
+        check_value((3, 1), &l_config.display_caller, &true, CheckType::Equal)?;
+
+        l_config.display_severity(Some(crate::LogSeverity::Info));
+        check_value(
+            (4, 1),
+            &l_config.display_severity.is_some(),
+            &true,
+            CheckType::Equal,
+        )?;
+
+        l_config.disable_terminal();
+        check_value((5, 1), &l_config.log_to_terminal, &false, CheckType::Equal)?;
+
+        Ok(())
+    }
+
+    #[test]
+    #[serial]
     fn clear_config_locked() -> Result<(), String> {
         // Set config to None
         force_clear_config();
@@ -579,6 +614,51 @@ mod tests {
         match crate::data::get_log_config() {
             Some(_) => Ok(()),
             None => Err("Configuration should be locked".to_string()),
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn file_creation_error() -> Result<(), String> {
+        force_clear_config();
+
+        let l_result = RustLogConfig::new_config()
+            .enable_file("/invalid_dir/log.txt", true)
+            .configure();
+
+        match l_result {
+            Ok(_) => Err("Should return error for invalid file path".to_string()),
+            Err(_) => Ok(()),
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn file_read_error() -> Result<(), String> {
+        force_clear_config();
+
+        // Create a write-only file
+        std::fs::write("write_only_log.txt", "").unwrap();
+        let mut perms = std::fs::metadata("write_only_log.txt")
+            .unwrap()
+            .permissions();
+        perms.set_readonly(false);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            perms.set_mode(0o222); // Write-only
+        }
+        std::fs::set_permissions("write_only_log.txt", perms).unwrap();
+
+        let l_result = RustLogConfig::new_config()
+            .enable_file("write_only_log.txt", true)
+            .configure();
+
+        std::fs::remove_file("write_only_log.txt").unwrap_or(());
+
+        match l_result {
+            Ok(_) => Err("Should return error for unreadable file".to_string()),
+            Err(_) => Ok(()),
         }
     }
 }

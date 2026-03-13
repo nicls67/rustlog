@@ -104,6 +104,7 @@ fn generate_log(
 #[cfg(test)]
 mod tests {
     use crate::{LogSeverity, RustLogConfig};
+    use rusttests::{check_value, CheckType};
 
     use super::generate_log;
 
@@ -122,10 +123,13 @@ mod tests {
             display_severity: None,
         };
 
-        match generate_log(LogSeverity::Info, l_text, l_caller, l_date, &l_config).as_str() {
-            "Hello" => Ok(()),
-            s => Err(format!("Wrong log string received : {s}")),
-        }
+        check_value(
+            (1, 1),
+            &generate_log(LogSeverity::Info, l_text, l_caller, l_date, &l_config),
+            &"Hello".to_string(),
+            CheckType::Equal,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -143,10 +147,13 @@ mod tests {
             display_severity: None,
         };
 
-        match generate_log(LogSeverity::Error, l_text, l_caller, l_date, &l_config).as_str() {
-            "Me - Hello" => Ok(()),
-            s => Err(format!("Wrong log string received : {s}")),
-        }
+        check_value(
+            (1, 1),
+            &generate_log(LogSeverity::Error, l_text, l_caller, l_date, &l_config),
+            &"Me - Hello".to_string(),
+            CheckType::Equal,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -164,10 +171,13 @@ mod tests {
             display_severity: Some(LogSeverity::Info),
         };
 
-        match generate_log(LogSeverity::Info, l_text, l_caller, l_date, &l_config).as_str() {
-            "2024-01-01 12:15:32 - INFO - Me - Hello" => Ok(()),
-            s => Err(format!("Wrong log string received : {s}")),
-        }
+        check_value(
+            (1, 1),
+            &generate_log(LogSeverity::Info, l_text, l_caller, l_date, &l_config),
+            &"2024-01-01 12:15:32 - INFO - Me - Hello".to_string(),
+            CheckType::Equal,
+        )?;
+        Ok(())
     }
 
     #[test]
@@ -185,9 +195,32 @@ mod tests {
             display_severity: Some(LogSeverity::Warning),
         };
 
-        match generate_log(LogSeverity::Info, l_text, l_caller, l_date, &l_config).as_str() {
-            "2024-01-01 12:15:32 - INFO - Me - Hello" => Ok(()),
-            s => Err(format!("Wrong log string received : {s}")),
-        }
+        check_value(
+            (1, 1),
+            &generate_log(LogSeverity::Info, l_text, l_caller, l_date, &l_config),
+            &"2024-01-01 12:15:32 - INFO - Me - Hello".to_string(),
+            CheckType::Equal,
+        )?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_write_log_terminal() {
+        crate::data::clear_log_config_and_file();
+        crate::data::set_log_config(Some(RustLogConfig {
+            log_to_terminal: true,
+            log_to_file: None,
+            append_to_file: false,
+            display_date: false,
+            display_caller: false,
+            locked: false,
+            display_severity: Some(LogSeverity::Warning),
+        }));
+
+        // Does not crash and prints to terminal
+        super::write_log(LogSeverity::Error, "Test error message", "test");
+
+        // This severity should be filtered out
+        super::write_log(LogSeverity::Info, "Test info message", "test");
     }
 }

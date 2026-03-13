@@ -21,7 +21,7 @@ use std::fmt;
 /// * `Info` - Used for informational messages that highlight the progress of the application.
 /// * `Warning` - Used for potentially harmful situations that might need attention.
 /// * `Error` - Used for error events that might still allow the application to continue running.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LogSeverity {
     Verbose,
     Info,
@@ -66,3 +66,76 @@ impl fmt::Display for LogSeverity {
 }
 
 pkg_infos!();
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rusttests::{check_value, CheckType};
+
+    #[test]
+    fn test_log_severity_level() -> Result<(), String> {
+        check_value((1, 1), &LogSeverity::Verbose.level(), &0, CheckType::Equal)?;
+        check_value((2, 1), &LogSeverity::Info.level(), &1, CheckType::Equal)?;
+        check_value((3, 1), &LogSeverity::Warning.level(), &2, CheckType::Equal)?;
+        check_value((4, 1), &LogSeverity::Error.level(), &3, CheckType::Equal)?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_log_severity_partial_cmp() -> Result<(), String> {
+        check_value(
+            (1, 1),
+            &(LogSeverity::Verbose < LogSeverity::Info),
+            &true,
+            CheckType::Equal,
+        )?;
+        check_value(
+            (2, 1),
+            &(LogSeverity::Info < LogSeverity::Warning),
+            &true,
+            CheckType::Equal,
+        )?;
+        check_value(
+            (3, 1),
+            &(LogSeverity::Warning < LogSeverity::Error),
+            &true,
+            CheckType::Equal,
+        )?;
+        check_value(
+            (4, 1),
+            &(LogSeverity::Verbose == LogSeverity::Verbose),
+            &true,
+            CheckType::Equal,
+        )?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_log_severity_display() -> Result<(), String> {
+        check_value(
+            (1, 1),
+            &format!("{}", LogSeverity::Verbose),
+            &"VERB".to_string(),
+            CheckType::Equal,
+        )?;
+        check_value(
+            (2, 1),
+            &format!("{}", LogSeverity::Info),
+            &"INFO".to_string(),
+            CheckType::Equal,
+        )?;
+        check_value(
+            (3, 1),
+            &format!("{}", LogSeverity::Warning),
+            &"WARNING".to_string(),
+            CheckType::Equal,
+        )?;
+        check_value(
+            (4, 1),
+            &format!("{}", LogSeverity::Error),
+            &"ERROR".to_string(),
+            CheckType::Equal,
+        )?;
+        Ok(())
+    }
+}
