@@ -545,6 +545,31 @@ mod tests {
 
     #[test]
     #[serial]
+    fn test_display_date() -> Result<(), String> {
+        force_clear_config();
+
+        let mut l_config = RustLogConfig::new_config();
+
+        // Initial state should typically have display_date set to true by new_config defaults (implied)
+        // Let's set it to false explicitly
+        l_config.display_date(false);
+        check_value((1, 1), &l_config.display_date, &false, CheckType::Equal)?;
+
+        // Set it back to true explicitly
+        l_config.display_date(true);
+        check_value((2, 1), &l_config.display_date, &true, CheckType::Equal)?;
+
+        // Lock config and ensure the value cannot be changed via the builder
+        l_config.enable_terminal(); // Required so it doesn't fail configure()
+        l_config.configure()?;
+        l_config.display_date(false);
+        // Because config is locked now via is_log_configured(), the change should be ignored
+        check_value((3, 1), &l_config.display_date, &true, CheckType::Equal)?;
+
+        Ok(())
+    }
+    #[test]
+    #[serial]
     fn clear_config_unlocked() -> Result<(), String> {
         // Set config to None
         force_clear_config();
