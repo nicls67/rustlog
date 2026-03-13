@@ -1,13 +1,16 @@
 use std::fs::File;
 use std::io::Write;
-use std::sync::Mutex;
-#[cfg(test)]
-use std::sync::MutexGuard;
+use std::sync::{Mutex, MutexGuard};
 
 use crate::log_config::RustLogConfig;
 
 static G_LOG_CONFIG: Mutex<Option<RustLogConfig>> = Mutex::new(None);
 static G_LOG_FILE: Mutex<Option<File>> = Mutex::new(None);
+
+/// Locks the given mutex and returns the guard, handling poisoning by returning the inner guard.
+fn lock_mutex<T>(p_mutex: &Mutex<T>) -> MutexGuard<'_, T> {
+    p_mutex.lock().unwrap_or_else(|l_e| l_e.into_inner())
+}
 
 /// Returns log configuration.
 ///
@@ -25,7 +28,7 @@ static G_LOG_FILE: Mutex<Option<File>> = Mutex::new(None);
 ///
 /// This function will never panic.
 pub fn get_log_config() -> Option<RustLogConfig> {
-    *G_LOG_CONFIG.lock().unwrap_or_else(|l_e| l_e.into_inner())
+    *lock_mutex(&G_LOG_CONFIG)
 }
 
 /// Checks if the global log configuration is set.
@@ -44,10 +47,7 @@ pub fn get_log_config() -> Option<RustLogConfig> {
 ///
 /// This function will never panic.
 pub fn is_log_configured() -> bool {
-    G_LOG_CONFIG
-        .lock()
-        .unwrap_or_else(|l_e| l_e.into_inner())
-        .is_some()
+    lock_mutex(&G_LOG_CONFIG).is_some()
 }
 
 /// Sets the global log configuration.
@@ -70,7 +70,7 @@ pub fn is_log_configured() -> bool {
 ///
 /// This function will never panic.
 pub fn set_log_config(p_config: Option<RustLogConfig>) {
-    *G_LOG_CONFIG.lock().unwrap_or_else(|l_e| l_e.into_inner()) = p_config;
+    *lock_mutex(&G_LOG_CONFIG) = p_config;
 }
 
 /// Returns a lock guard to the global log file.
@@ -91,7 +91,7 @@ pub fn set_log_config(p_config: Option<RustLogConfig>) {
 /// This function will never panic.
 #[cfg(test)]
 pub fn get_log_file() -> MutexGuard<'static, Option<File>> {
-    G_LOG_FILE.lock().unwrap_or_else(|l_e| l_e.into_inner())
+    lock_mutex(&G_LOG_FILE)
 }
 
 /// Writes the given data to the global log file.
@@ -117,11 +117,7 @@ pub fn get_log_file() -> MutexGuard<'static, Option<File>> {
 ///
 /// This function will never panic.
 pub fn write_to_log_file(p_data: &[u8]) -> Result<(), String> {
-    if let Some(l_f) = G_LOG_FILE
-        .lock()
-        .unwrap_or_else(|l_e| l_e.into_inner())
-        .as_mut()
-    {
+    if let Some(l_f) = lock_mutex(&G_LOG_FILE).as_mut() {
         l_f.write_all(p_data).map_err(|l_e| format!("{l_e}"))
     } else {
         Ok(())
@@ -148,7 +144,7 @@ pub fn write_to_log_file(p_data: &[u8]) -> Result<(), String> {
 ///
 /// This function will never panic.
 pub fn set_log_file(p_file: Option<File>) {
-    *G_LOG_FILE.lock().unwrap_or_else(|l_e| l_e.into_inner()) = p_file;
+    *lock_mutex(&G_LOG_FILE) = p_file;
 }
 
 /// Clears both the global log configuration and the global log file.
@@ -167,6 +163,6 @@ pub fn set_log_file(p_file: Option<File>) {
 ///
 /// This function will never panic.
 pub fn clear_log_config_and_file() {
-    *G_LOG_CONFIG.lock().unwrap_or_else(|l_e| l_e.into_inner()) = None;
-    *G_LOG_FILE.lock().unwrap_or_else(|l_e| l_e.into_inner()) = None;
+    *lock_mutex(&G_LOG_CONFIG) = None;
+    *lock_mutex(&G_LOG_FILE) = None;
 }
