@@ -499,21 +499,16 @@ mod tests {
         // Function shall return Err
         // log file shall be None
         // Log options shall be None
-        let l_result = RustLogConfig::new_config().configure();
+        check_result((1, 1), RustLogConfig::new_config().configure(), false)?;
+
         remove_file("log.txt").unwrap_or(());
 
-        match l_result {
-            Ok(_) => Err("configure_log should return Err variant".to_string()),
-            Err(_) => {
-                // Verify that config was not saved before validation
-                match crate::data::get_log_config() {
-                    Some(_) => Err("LOG_CONFIG should be None after failed configure".to_string()),
-                    None => Ok(()),
-                }
-            }
+        // Verify that config was not saved before validation
+        match crate::data::get_log_config() {
+            Some(_) => Err("LOG_CONFIG should be None after failed configure".to_string()),
+            None => Ok(()),
         }
     }
-
     #[test]
     #[serial]
     fn enable_terminal() -> Result<(), String> {
