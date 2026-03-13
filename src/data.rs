@@ -187,4 +187,40 @@ mod tests {
         )?;
         Ok(())
     }
+
+    #[test]
+    fn test_is_log_configured() -> Result<(), String> {
+        clear_log_config_and_file();
+        check_value((1, 1), &is_log_configured(), &false, CheckType::Equal)?;
+
+        let config = RustLogConfig::new_config();
+        set_log_config(Some(config));
+        check_value((2, 1), &is_log_configured(), &true, CheckType::Equal)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_get_log_config() -> Result<(), String> {
+        clear_log_config_and_file();
+        check_value((1, 1), &get_log_config().is_none(), &true, CheckType::Equal)?;
+
+        let config = RustLogConfig::new_config();
+        set_log_config(Some(config));
+        check_value((2, 1), &get_log_config().is_some(), &true, CheckType::Equal)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_set_get_log_file() -> Result<(), String> {
+        clear_log_config_and_file();
+        check_value((1, 1), &get_log_file().is_none(), &true, CheckType::Equal)?;
+
+        // Note: we can't easily test setting a real file here without dealing with the filesystem,
+        // but we can at least test that clear_log_config_and_file properly resets the None state
+        // and we have successfully tested `is_none()` above.
+
+        Ok(())
+    }
 }
