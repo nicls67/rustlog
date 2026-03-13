@@ -339,9 +339,9 @@ impl RustLogConfig {
                         let l_date = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
 
                         // Check if file is empty
-                        match fs::read_to_string(l_log_file) {
-                            Ok(l_s) => {
-                                if !l_s.is_empty() && self.append_to_file {
+                        match fs::metadata(l_log_file) {
+                            Ok(l_m) => {
+                                if l_m.len() > 0 && self.append_to_file {
                                     write_to_log_file("\n".as_bytes())?;
                                 }
                             }
