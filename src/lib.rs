@@ -21,37 +21,12 @@ use std::fmt;
 /// * `Info` - Used for informational messages that highlight the progress of the application.
 /// * `Warning` - Used for potentially harmful situations that might need attention.
 /// * `Error` - Used for error events that might still allow the application to continue running.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd)]
 pub enum LogSeverity {
     Verbose,
     Info,
     Warning,
     Error,
-}
-
-impl LogSeverity {
-    /// Returns the numeric value associated with each severity level.
-    ///
-    /// This is used internally for ordering comparisons.
-    ///
-    /// # Returns
-    ///
-    /// A `u8` value representing the severity level: `Verbose` = 0, `Info` = 1,
-    /// `Warning` = 2, `Error` = 3.
-    fn level(&self) -> u8 {
-        match self {
-            LogSeverity::Verbose => 0,
-            LogSeverity::Info => 1,
-            LogSeverity::Warning => 2,
-            LogSeverity::Error => 3,
-        }
-    }
-}
-
-impl PartialOrd for LogSeverity {
-    fn partial_cmp(&self, p_other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.level().cmp(&p_other.level()))
-    }
 }
 
 impl fmt::Display for LogSeverity {
@@ -71,15 +46,6 @@ pkg_infos!();
 mod tests {
     use super::*;
     use rusttests::{check_value, CheckType};
-
-    #[test]
-    fn test_log_severity_level() -> Result<(), String> {
-        check_value((1, 1), &LogSeverity::Verbose.level(), &0, CheckType::Equal)?;
-        check_value((2, 1), &LogSeverity::Info.level(), &1, CheckType::Equal)?;
-        check_value((3, 1), &LogSeverity::Warning.level(), &2, CheckType::Equal)?;
-        check_value((4, 1), &LogSeverity::Error.level(), &3, CheckType::Equal)?;
-        Ok(())
-    }
 
     #[test]
     fn test_log_severity_partial_cmp() -> Result<(), String> {
