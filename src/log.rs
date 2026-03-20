@@ -235,7 +235,8 @@ mod tests {
 
         let expected = "2024-01-01 12:15:32 - INFO - Me - Line 1\n\
                         2024-01-01 12:15:32 - INFO - Me - Line 2\n\
-                        2024-01-01 12:15:32 - INFO - Me - Line 3".to_string();
+                        2024-01-01 12:15:32 - INFO - Me - Line 3"
+            .to_string();
 
         check_value(
             (1, 1),
@@ -263,7 +264,8 @@ mod tests {
 
         let expected = "2024-01-01 12:15:32 - INFO - Me - Line 1\n\
                         2024-01-01 12:15:32 - INFO - Me - Line 2\n\
-                        2024-01-01 12:15:32 - INFO - Me - Line 3".to_string();
+                        2024-01-01 12:15:32 - INFO - Me - Line 3"
+            .to_string();
 
         check_value(
             (1, 1),
