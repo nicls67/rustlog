@@ -2,7 +2,7 @@
 //! RustLog configuration module
 //!
 
-use std::fs::{self, File};
+use std::fs::File;
 
 use chrono::Local;
 
@@ -334,12 +334,13 @@ impl RustLogConfig {
                     .open(l_log_file)
                 {
                     Ok(l_f) => {
+                        let l_m_res = l_f.metadata();
                         set_log_file(Some(l_f));
 
                         let l_date = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
 
                         // Check if file is empty
-                        match fs::metadata(l_log_file) {
+                        match l_m_res {
                             Ok(l_m) => {
                                 if l_m.len() > 0 && self.append_to_file {
                                     write_to_log_file(b"\n")?;
@@ -675,7 +676,9 @@ mod tests {
             .configure();
 
         // Restore permissions to allow file removal on Windows, etc.
-        if let Ok(mut cleanup_perms) = std::fs::metadata("read_only_log.txt").map(|m| m.permissions()) {
+        if let Ok(mut cleanup_perms) =
+            std::fs::metadata("read_only_log.txt").map(|m| m.permissions())
+        {
             #[cfg(not(unix))]
             cleanup_perms.set_readonly(false);
             #[cfg(unix)]

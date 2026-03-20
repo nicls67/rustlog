@@ -41,7 +41,7 @@ pub fn write_log(p_severity: LogSeverity, p_text: &str, p_caller: &str) {
         }
 
         // Log message
-        if l_disp_severity {
+        if l_disp_severity && !p_text.is_empty() {
             let l_date = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
             let mut l_log = generate_log(p_severity, p_text, p_caller, l_date, &l_config);
 
@@ -87,20 +87,31 @@ fn generate_log(
     p_date: String,
     p_config: &RustLogConfig,
 ) -> String {
-    let mut l_output = String::new();
+    let mut l_prefix = String::new();
     if p_config.display_date {
-        l_output.push_str(&p_date);
-        l_output.push_str(" - ");
+        l_prefix.push_str(&p_date);
+        l_prefix.push_str(" - ");
     }
     if p_config.display_severity.is_some() {
-        l_output.push_str(&p_severity.to_string());
-        l_output.push_str(" - ");
+        l_prefix.push_str(&p_severity.to_string());
+        l_prefix.push_str(" - ");
     }
     if p_config.display_caller {
-        l_output.push_str(p_caller);
-        l_output.push_str(" - ");
+        l_prefix.push_str(p_caller);
+        l_prefix.push_str(" - ");
     }
-    l_output.push_str(p_text);
+
+    let mut l_output = String::new();
+    let l_lines: Vec<&str> = p_text.lines().filter(|s| !s.is_empty()).collect();
+    if !l_lines.is_empty() {
+        for (l_i, l_line) in l_lines.iter().enumerate() {
+            l_output.push_str(&l_prefix);
+            l_output.push_str(l_line);
+            if l_i < l_lines.len() - 1 {
+                l_output.push('\n');
+            }
+        }
+    }
     l_output
 }
 
@@ -202,6 +213,62 @@ mod tests {
             (1, 1),
             &generate_log(LogSeverity::Info, l_text, l_caller, l_date, &l_config),
             &"2024-01-01 12:15:32 - INFO - Me - Hello".to_string(),
+            CheckType::Equal,
+        )?;
+        Ok(())
+    }
+
+    #[test]
+    fn formatting_multiline() -> Result<(), String> {
+        let l_text = "Line 1\nLine 2\nLine 3";
+        let l_caller = "Me";
+        let l_date = "2024-01-01 12:15:32".to_string();
+        let l_config = RustLogConfig {
+            log_to_terminal: true,
+            log_to_file: None,
+            append_to_file: false,
+            display_date: true,
+            display_caller: true,
+            locked: false,
+            display_severity: Some(LogSeverity::Info),
+        };
+
+        let expected = "2024-01-01 12:15:32 - INFO - Me - Line 1\n\
+                        2024-01-01 12:15:32 - INFO - Me - Line 2\n\
+                        2024-01-01 12:15:32 - INFO - Me - Line 3".to_string();
+
+        check_value(
+            (1, 1),
+            &generate_log(LogSeverity::Info, l_text, l_caller, l_date, &l_config),
+            &expected,
+            CheckType::Equal,
+        )?;
+        Ok(())
+    }
+
+    #[test]
+    fn formatting_multiple_consecutive_newlines() -> Result<(), String> {
+        let l_text = "Line 1\n\n\nLine 2\n\nLine 3";
+        let l_caller = "Me";
+        let l_date = "2024-01-01 12:15:32".to_string();
+        let l_config = RustLogConfig {
+            log_to_terminal: true,
+            log_to_file: None,
+            append_to_file: false,
+            display_date: true,
+            display_caller: true,
+            locked: false,
+            display_severity: Some(LogSeverity::Info),
+        };
+
+        let expected = "2024-01-01 12:15:32 - INFO - Me - Line 1\n\
+                        2024-01-01 12:15:32 - INFO - Me - Line 2\n\
+                        2024-01-01 12:15:32 - INFO - Me - Line 3".to_string();
+
+        check_value(
+            (1, 1),
+            &generate_log(LogSeverity::Info, l_text, l_caller, l_date, &l_config),
+            &expected,
             CheckType::Equal,
         )?;
         Ok(())
