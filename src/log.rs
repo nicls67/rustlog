@@ -89,15 +89,18 @@ fn generate_log(
 ) -> String {
     let mut l_output = String::new();
     if p_config.display_date {
-        l_output = l_output + &p_date + " - ";
+        l_output.push_str(&p_date);
+        l_output.push_str(" - ");
     }
     if p_config.display_severity.is_some() {
-        l_output = l_output + &p_severity.to_string() + " - ";
+        l_output.push_str(&p_severity.to_string());
+        l_output.push_str(" - ");
     }
     if p_config.display_caller {
-        l_output = l_output + p_caller + " - ";
+        l_output.push_str(p_caller);
+        l_output.push_str(" - ");
     }
-    l_output += p_text;
+    l_output.push_str(p_text);
     l_output
 }
 

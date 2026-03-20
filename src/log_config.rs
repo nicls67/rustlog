@@ -676,7 +676,13 @@ mod tests {
 
         // Restore permissions to allow file removal on Windows, etc.
         if let Ok(mut cleanup_perms) = std::fs::metadata("read_only_log.txt").map(|m| m.permissions()) {
+            #[cfg(not(unix))]
             cleanup_perms.set_readonly(false);
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                cleanup_perms.set_mode(0o644);
+            }
             let _ = std::fs::set_permissions("read_only_log.txt", cleanup_perms);
         }
         std::fs::remove_file("read_only_log.txt").unwrap_or(());
