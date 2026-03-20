@@ -298,4 +298,15 @@ mod tests {
         // This severity should be filtered out
         super::write_log(LogSeverity::Info, "Test info message", "test");
     }
+
+    #[test]
+    fn test_write_log_unconfigured() {
+        // Clear log config completely
+        crate::data::clear_log_config_and_file();
+
+        // Calling write_log when unconfigured should not panic
+        // and should do nothing
+        super::write_log(LogSeverity::Error, "Test error message", "test");
+        super::write_log(LogSeverity::Info, "Test info message", "test");
+    }
 }
