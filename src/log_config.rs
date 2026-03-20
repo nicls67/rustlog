@@ -342,7 +342,7 @@ impl RustLogConfig {
                         match fs::metadata(l_log_file) {
                             Ok(l_m) => {
                                 if l_m.len() > 0 && self.append_to_file {
-                                    write_to_log_file("\n".as_bytes())?;
+                                    write_to_log_file(b"\n")?;
                                 }
                             }
                             Err(l_e) => return Err(format!("{l_e}")),

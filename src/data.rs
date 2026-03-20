@@ -118,7 +118,7 @@ pub fn get_log_file() -> MutexGuard<'static, Option<File>> {
 /// This function will never panic.
 pub fn write_to_log_file(p_data: &[u8]) -> Result<(), String> {
     if let Some(l_f) = lock_mutex(&G_LOG_FILE).as_mut() {
-        l_f.write_all(p_data).map_err(|l_e| format!("{l_e}"))
+        l_f.write_all(p_data).map_err(|l_e| l_e.to_string())
     } else {
         Ok(())
     }
