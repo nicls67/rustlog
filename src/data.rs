@@ -219,4 +219,33 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn test_lock_mutex_poisoning() -> Result<(), String> {
+        use std::sync::Arc;
+        use std::thread;
+
+        let l_mutex = Arc::new(Mutex::new(0));
+        let l_mutex_clone = Arc::clone(&l_mutex);
+
+        // Spawn a thread that will lock the mutex and then panic,
+        // thereby poisoning the mutex.
+        let l_handle = thread::spawn(move || {
+            let mut l_guard = l_mutex_clone.lock().unwrap();
+            *l_guard = 42;
+            panic!("Intentional panic to poison the mutex");
+        });
+
+        // Wait for the thread to finish and panic
+        let _ = l_handle.join();
+
+        // At this point, the mutex is poisoned.
+        // We call lock_mutex, which should recover the inner guard.
+        let l_guard = lock_mutex(&l_mutex);
+
+        // Verify the value was updated before the panic
+        check_value((1, 1), &*l_guard, &42, CheckType::Equal)?;
+
+        Ok(())
+    }
 }
