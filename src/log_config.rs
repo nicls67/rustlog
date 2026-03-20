@@ -654,30 +654,35 @@ mod tests {
 
     #[test]
     #[serial]
-    fn file_read_error() -> Result<(), String> {
+    fn file_write_error() -> Result<(), String> {
         force_clear_config();
 
-        // Create a write-only file
-        std::fs::write("write_only_log.txt", "").unwrap();
-        let mut perms = std::fs::metadata("write_only_log.txt")
+        // Create a read-only file
+        std::fs::write("read_only_log.txt", "").unwrap();
+        let mut perms = std::fs::metadata("read_only_log.txt")
             .unwrap()
             .permissions();
-        perms.set_readonly(false);
+        perms.set_readonly(true);
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
-            perms.set_mode(0o222); // Write-only
+            perms.set_mode(0o444); // Read-only
         }
-        std::fs::set_permissions("write_only_log.txt", perms).unwrap();
+        std::fs::set_permissions("read_only_log.txt", perms).unwrap();
 
         let l_result = RustLogConfig::new_config()
-            .enable_file("write_only_log.txt", true)
+            .enable_file("read_only_log.txt", true)
             .configure();
 
-        std::fs::remove_file("write_only_log.txt").unwrap_or(());
+        // Restore permissions to allow file removal on Windows, etc.
+        if let Ok(mut cleanup_perms) = std::fs::metadata("read_only_log.txt").map(|m| m.permissions()) {
+            cleanup_perms.set_readonly(false);
+            let _ = std::fs::set_permissions("read_only_log.txt", cleanup_perms);
+        }
+        std::fs::remove_file("read_only_log.txt").unwrap_or(());
 
         match l_result {
-            Ok(_) => Err("Should return error for unreadable file".to_string()),
+            Ok(_) => Err("Should return error for unwritable file".to_string()),
             Err(_) => Ok(()),
         }
     }
