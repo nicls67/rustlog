@@ -2,7 +2,7 @@
 //! RustLog configuration module
 //!
 
-use std::fs::{self, File};
+use std::fs::File;
 
 use chrono::Local;
 
@@ -315,48 +315,40 @@ impl RustLogConfig {
     pub fn configure(&self) -> Result<(), String> {
         // Logging is already configured, return Err
         if is_log_configured() {
-            Err(String::from("Logging already configured"))
-        } else {
-            // At least one log destination must be selected
-            if !self.log_to_terminal && self.log_to_file.is_none() {
-                return Err("All log destinations are disabled".to_string());
-            }
-
-            // Save configuration
-            set_log_config(Some(*self));
-
-            // Create log file
-            if let Some(l_log_file) = self.log_to_file {
-                match File::options()
-                    .create(true)
-                    .write(true)
-                    .append(self.append_to_file)
-                    .open(l_log_file)
-                {
-                    Ok(l_f) => {
-                        set_log_file(Some(l_f));
-
-                        let l_date = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
-
-                        // Check if file is empty
-                        match fs::metadata(l_log_file) {
-                            Ok(l_m) => {
-                                if l_m.len() > 0 && self.append_to_file {
-                                    write_to_log_file("\n".as_bytes())?;
-                                }
-                            }
-                            Err(l_e) => return Err(format!("{l_e}")),
-                        };
-
-                        // Write date on 1st line
-                        write_to_log_file(format!("Log start on {l_date}\n").as_bytes())?;
-                    }
-                    Err(l_e) => return Err(format!("{l_e}")),
-                };
-            }
-
-            Ok(())
+            return Err(String::from("Logging already configured"));
         }
+        // At least one log destination must be selected
+        if !self.log_to_terminal && self.log_to_file.is_none() {
+            return Err("All log destinations are disabled".to_string());
+        }
+
+        // Save configuration
+        set_log_config(Some(*self));
+
+        // Create log file
+        if let Some(l_log_file) = self.log_to_file {
+            let l_f = File::options()
+                .create(true)
+                .write(true)
+                .append(self.append_to_file)
+                .open(l_log_file)
+                .map_err(|l_e| l_e.to_string())?;
+
+            let l_m = l_f.metadata().map_err(|l_e| l_e.to_string())?;
+            set_log_file(Some(l_f));
+
+            let l_date = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
+
+            // Check if file is empty
+            if l_m.len() > 0 && self.append_to_file {
+                write_to_log_file(b"\n")?;
+            }
+
+            // Write date on 1st line
+            write_to_log_file(format!("Log start on {l_date}\n").as_bytes())?;
+        }
+
+        Ok(())
     }
 }
 
@@ -675,8 +667,16 @@ mod tests {
             .configure();
 
         // Restore permissions to allow file removal on Windows, etc.
-        if let Ok(mut cleanup_perms) = std::fs::metadata("read_only_log.txt").map(|m| m.permissions()) {
+        if let Ok(mut cleanup_perms) =
+            std::fs::metadata("read_only_log.txt").map(|m| m.permissions())
+        {
+            #[cfg(not(unix))]
             cleanup_perms.set_readonly(false);
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                cleanup_perms.set_mode(0o644);
+            }
             let _ = std::fs::set_permissions("read_only_log.txt", cleanup_perms);
         }
         std::fs::remove_file("read_only_log.txt").unwrap_or(());

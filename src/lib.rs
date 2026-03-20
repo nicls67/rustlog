@@ -32,10 +32,10 @@ pub enum LogSeverity {
 impl fmt::Display for LogSeverity {
     fn fmt(&self, p_f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            LogSeverity::Verbose => write!(p_f, "VERB"),
-            LogSeverity::Info => write!(p_f, "INFO"),
-            LogSeverity::Warning => write!(p_f, "WARNING"),
-            LogSeverity::Error => write!(p_f, "ERROR"),
+            LogSeverity::Verbose => p_f.write_str("VERB"),
+            LogSeverity::Info => p_f.write_str("INFO"),
+            LogSeverity::Warning => p_f.write_str("WARNING"),
+            LogSeverity::Error => p_f.write_str("ERROR"),
         }
     }
 }

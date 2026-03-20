@@ -8,7 +8,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rustlog = "1.2.0"
+rustlog = "1.2.2"
 ```
 
 ## How it works ?
@@ -25,7 +25,7 @@ Calls of `write_log` method will never panic or return an error to avoid any per
 
 Implementation of `RustLogConfig` must be used to generate log configuration.
 
-`RustLogConfig::new_config` will generate a default configuration will all outputs disabled. Then use `RustLogConfig` methods to configure logging and enable outputs.
+`RustLogConfig::new_config` will generate a default configuration with all outputs disabled. Then use `RustLogConfig` methods to configure logging and enable outputs.
 
 `RustLogConfig::configure` will configure and start logging with the desired configuration. `RustLogConfig::configure` will return an `Err` variant if called twice, with no impact on the current logging configuration.
 
@@ -75,7 +75,7 @@ RustLogConfig::new_config().display_severity(Some(LogSeverity::Warning));
 
 ### Log text
 
-Call `write_log` to generate a log entry. Format of log entry is _DATE-SEVERITY-CALLER-TEXT_, _DATE_, _SEVERITY_ and _CALLER_ might be added or not depending of the selected configuration.
+Call `write_log` to generate a log entry. The format of a log entry is `DATE - SEVERITY - CALLER - TEXT`. The date, severity, and caller prefix might be added or not depending on the selected configuration. If the provided text contains multiple lines, each non-empty line will automatically be prefixed with the configured log header.
 
 ```rust
 use rustlog::write_log;
