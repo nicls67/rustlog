@@ -171,8 +171,10 @@ pub fn clear_log_config_and_file() {
 mod tests {
     use super::*;
     use rusttests::{check_value, CheckType};
+    use serial_test::serial;
 
     #[test]
+    #[serial]
     fn test_write_to_log_file_none() -> Result<(), String> {
         clear_log_config_and_file();
         check_value(
@@ -185,6 +187,28 @@ mod tests {
     }
 
     #[test]
+    #[serial]
+    fn test_write_to_log_file_success() -> Result<(), String> {
+        clear_log_config_and_file();
+
+        let path = std::env::temp_dir().join("test_log_rustlog_success.txt");
+        let file = File::create(&path).map_err(|l_e| l_e.to_string())?;
+        set_log_file(Some(file));
+
+        let write_res = write_to_log_file(b"test data");
+        check_value((1, 1), &write_res, &Ok(()), CheckType::Equal)?;
+
+        set_log_file(None);
+
+        let content = std::fs::read_to_string(&path).map_err(|l_e| l_e.to_string())?;
+        check_value((2, 1), &content, &"test data".to_string(), CheckType::Equal)?;
+
+        std::fs::remove_file(&path).map_err(|l_e| l_e.to_string())?;
+        Ok(())
+    }
+
+    #[test]
+    #[serial]
     fn test_is_log_configured() -> Result<(), String> {
         clear_log_config_and_file();
         check_value((1, 1), &is_log_configured(), &false, CheckType::Equal)?;
@@ -197,6 +221,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_get_log_config() -> Result<(), String> {
         clear_log_config_and_file();
         check_value((1, 1), &get_log_config().is_none(), &true, CheckType::Equal)?;
@@ -209,6 +234,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_set_get_log_file() -> Result<(), String> {
         clear_log_config_and_file();
         check_value((1, 1), &get_log_file().is_none(), &true, CheckType::Equal)?;
