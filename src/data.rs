@@ -171,8 +171,10 @@ pub fn clear_log_config_and_file() {
 mod tests {
     use super::*;
     use rusttests::{check_value, CheckType};
+    use serial_test::serial;
 
     #[test]
+    #[serial]
     fn test_write_to_log_file_none() -> Result<(), String> {
         clear_log_config_and_file();
         check_value(
@@ -185,30 +187,54 @@ mod tests {
     }
 
     #[test]
+    #[serial]
+    fn test_write_to_log_file_success() -> Result<(), String> {
+        clear_log_config_and_file();
+
+        let l_path = std::env::temp_dir().join("test_log_rustlog_success.txt");
+        let l_file = File::create(&l_path).map_err(|l_e| l_e.to_string())?;
+        set_log_file(Some(l_file));
+
+        let l_write_res = write_to_log_file(b"test data");
+        check_value((1, 1), &l_write_res, &Ok(()), CheckType::Equal)?;
+
+        set_log_file(None);
+
+        let l_content = std::fs::read_to_string(&l_path).map_err(|l_e| l_e.to_string())?;
+        check_value((2, 1), &l_content, &"test data".to_string(), CheckType::Equal)?;
+
+        std::fs::remove_file(&l_path).map_err(|l_e| l_e.to_string())?;
+        Ok(())
+    }
+
+    #[test]
+    #[serial]
     fn test_is_log_configured() -> Result<(), String> {
         clear_log_config_and_file();
         check_value((1, 1), &is_log_configured(), &false, CheckType::Equal)?;
 
-        let config = RustLogConfig::new_config();
-        set_log_config(Some(config));
+        let l_config = RustLogConfig::new_config();
+        set_log_config(Some(l_config));
         check_value((2, 1), &is_log_configured(), &true, CheckType::Equal)?;
 
         Ok(())
     }
 
     #[test]
+    #[serial]
     fn test_get_log_config() -> Result<(), String> {
         clear_log_config_and_file();
         check_value((1, 1), &get_log_config().is_none(), &true, CheckType::Equal)?;
 
-        let config = RustLogConfig::new_config();
-        set_log_config(Some(config));
+        let l_config = RustLogConfig::new_config();
+        set_log_config(Some(l_config));
         check_value((2, 1), &get_log_config().is_some(), &true, CheckType::Equal)?;
 
         Ok(())
     }
 
     #[test]
+    #[serial]
     fn test_set_get_log_file() -> Result<(), String> {
         clear_log_config_and_file();
         check_value((1, 1), &get_log_file().is_none(), &true, CheckType::Equal)?;
