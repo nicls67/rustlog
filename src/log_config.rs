@@ -686,4 +686,34 @@ mod tests {
             Err(_) => Ok(()),
         }
     }
+
+    #[test]
+    #[serial]
+    fn append_to_empty_file() -> Result<(), String> {
+        force_clear_config();
+
+        let l_file = "empty_log.txt";
+        // Ensure file is empty and exists
+        std::fs::write(l_file, "").unwrap();
+
+        // Configure to append to file
+        RustLogConfig::new_config()
+            .enable_file(l_file, true)
+            .configure()?;
+
+        // Clear config to flush and close the file
+        force_clear_config();
+
+        // Read file contents
+        let l_content = std::fs::read_to_string(l_file).unwrap();
+        std::fs::remove_file(l_file).unwrap_or(());
+
+        // Check that the content does not start with a newline
+        // If it starts with "\n", the append to empty file issue is present
+        if l_content.starts_with('\n') {
+            Err("Log file incorrectly starts with a newline when appended to an empty file".to_string())
+        } else {
+            Ok(())
+        }
+    }
 }
