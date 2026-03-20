@@ -12,11 +12,13 @@ use crate::{
 /// Writes the given `p_text` to log.
 ///
 /// Severity, caller name, and date will be added in the format _DATE-SEVERITY-CALLER-TEXT_.
+/// If `p_text` contains multiple lines, each non-empty line is prefixed with the log header.
+/// Empty text is silently ignored.
 ///
 /// # Arguments
 ///
 /// * `p_severity` - The severity level of the log (Verbose, Info, Warning, Error).
-/// * `p_text` - The log message to be written.
+/// * `p_text` - The log message to be written. May contain multiple lines.
 /// * `p_caller` - The name of the function or module that is writing the log.
 ///
 /// # Returns
@@ -58,13 +60,15 @@ pub fn write_log(p_severity: LogSeverity, p_text: &str, p_caller: &str) {
 
 /// Generates a formatted log string based on the provided configuration.
 ///
-/// Combines the date, severity, caller, and the log message into a single string.
-/// The format of the log string depends on the `RustLogConfig` settings.
+/// Builds a prefix from the date, severity, and caller according to `RustLogConfig`,
+/// then prepends that prefix to every non-empty line of `p_text`.
+/// Empty lines (including consecutive newlines) are filtered out.
+/// Lines are joined with `\n` in the returned string.
 ///
 /// # Arguments
 ///
 /// * `p_severity` - The severity level of the log (Verbose, Info, Warning, Error).
-/// * `p_text` - The log message to be written.
+/// * `p_text` - The log message to be written. May contain multiple lines.
 /// * `p_caller` - The name of the function or module that is writing the log.
 /// * `p_date` - The current date and time as a string.
 /// * `p_config` - A reference to the configuration settings for the logger.
@@ -102,15 +106,14 @@ fn generate_log(
     }
 
     let mut l_output = String::new();
-    let l_lines: Vec<&str> = p_text.lines().filter(|s| !s.is_empty()).collect();
-    if !l_lines.is_empty() {
-        for (l_i, l_line) in l_lines.iter().enumerate() {
-            l_output.push_str(&l_prefix);
-            l_output.push_str(l_line);
-            if l_i < l_lines.len() - 1 {
-                l_output.push('\n');
-            }
+    let mut l_first = true;
+    for l_line in p_text.lines().filter(|s| !s.is_empty()) {
+        if !l_first {
+            l_output.push('\n');
         }
+        l_output.push_str(&l_prefix);
+        l_output.push_str(l_line);
+        l_first = false;
     }
     l_output
 }

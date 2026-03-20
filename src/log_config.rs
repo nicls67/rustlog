@@ -332,9 +332,9 @@ impl RustLogConfig {
                 .write(true)
                 .append(self.append_to_file)
                 .open(l_log_file)
-                .map_err(|l_e| format!("{l_e}"))?;
+                .map_err(|l_e| l_e.to_string())?;
 
-            let l_m = l_f.metadata().map_err(|l_e| format!("{l_e}"))?;
+            let l_m = l_f.metadata().map_err(|l_e| l_e.to_string())?;
             set_log_file(Some(l_f));
 
             let l_date = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
