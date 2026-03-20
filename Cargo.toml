@@ -9,8 +9,8 @@ description = "A logging library for Rust projects"
 
 [dependencies]
 chrono = "0.4.37"
-package_infos = { git = "http://serveur-dev.home/rust-libs/package_infos.git", tag = "0.1.1" }
+package_infos = { git = "https://github.com/nicls67/package_infos.git", tag = "0.1.1" }
 
 [dev-dependencies]
-rusttests = { git = "http://serveur-dev.home/rust-libs/rusttests.git", tag = "1.1.1" }
+rusttests = { git = "https://github.com/nicls67/rusttests.git", tag = "1.1.1" }
 serial_test = "3.3.1"

@@ -177,7 +177,7 @@ checksum = "3fdb12b2476b595f9358c5161aa467c2438859caa136dec86c26fdd2efe17b92"
 [[package]]
 name = "package_infos"
 version = "0.1.1"
-source = "git+http://serveur-dev.home/rust-libs/package_infos.git?tag=0.1.1#c1d6c224030aa3d5ea31ea54999b37b50afef74f"
+source = "git+https://github.com/nicls67/package_infos.git?tag=0.1.1#c1d6c224030aa3d5ea31ea54999b37b50afef74f"
 
 [[package]]
 name = "parking_lot"
@@ -254,7 +254,7 @@ dependencies = [
 [[package]]
 name = "rusttests"
 version = "1.1.1"
-source = "git+http://serveur-dev.home/rust-libs/rusttests.git?tag=1.1.1#5eca7c09e05e10c0f2dd8214c3d38999dae41f11"
+source = "git+https://github.com/nicls67/rusttests.git?tag=1.1.1#5eca7c09e05e10c0f2dd8214c3d38999dae41f11"
 
 [[package]]
 name = "scc"
