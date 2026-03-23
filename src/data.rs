@@ -209,6 +209,56 @@ mod tests {
 
     #[test]
     #[serial]
+    fn test_write_to_log_file_multiple_success() -> Result<(), String> {
+        clear_log_config_and_file();
+
+        let l_path = std::env::temp_dir().join("test_log_rustlog_mult_success.txt");
+        let l_file = File::create(&l_path).map_err(|l_e| l_e.to_string())?;
+        set_log_file(Some(l_file));
+
+        let l_res1 = write_to_log_file(b"test data 1");
+        check_value((1, 1), &l_res1, &Ok(()), CheckType::Equal)?;
+
+        let l_res2 = write_to_log_file(b"\ntest data 2");
+        check_value((2, 1), &l_res2, &Ok(()), CheckType::Equal)?;
+
+        set_log_file(None);
+
+        let l_content = std::fs::read_to_string(&l_path).map_err(|l_e| l_e.to_string())?;
+        check_value(
+            (3, 1),
+            &l_content,
+            &"test data 1\ntest data 2".to_string(),
+            CheckType::Equal,
+        )?;
+
+        std::fs::remove_file(&l_path).unwrap_or(());
+        Ok(())
+    }
+
+    #[test]
+    #[serial]
+    fn test_write_to_log_file_error() -> Result<(), String> {
+        clear_log_config_and_file();
+
+        let l_path = std::env::temp_dir().join("test_log_rustlog_error.txt");
+        let _ = File::create(&l_path).map_err(|l_e| l_e.to_string())?;
+        let l_file = std::fs::OpenOptions::new()
+            .read(true)
+            .open(&l_path)
+            .map_err(|l_e| l_e.to_string())?;
+        set_log_file(Some(l_file));
+
+        let l_write_res = write_to_log_file(b"test data");
+        check_value((1, 1), &l_write_res.is_err(), &true, CheckType::Equal)?;
+
+        set_log_file(None);
+        std::fs::remove_file(&l_path).unwrap_or(());
+        Ok(())
+    }
+
+    #[test]
+    #[serial]
     fn test_is_log_configured() -> Result<(), String> {
         clear_log_config_and_file();
         check_value((1, 1), &is_log_configured(), &false, CheckType::Equal)?;
